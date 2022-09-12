@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
-
+#include <algorithm>
 
 
 
@@ -47,16 +47,17 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 	std::mt19937 gen(rd());
 
 	std::uniform_int_distribution<>dist(1, dimensao); // Gera numeros aleatorios de 1 até a dimensão dada
-
+	
+	std::vector < int > sequencia = s->sequence;
+	
+	std::sort(sequencia.begin(), sequencia.end()); // Organiza os valores para aplicar a busca binária
 	for(int i = 0; i < 3; i++) {
 
 		int numeroEscolhido = dist(gen);
 
-		std::vector < int > sequencia = s->sequence;
 
-		/* Aplicando busca binaria*/
-		
-		int limiteSuperior = sequencia.size();
+		/* Aplicando busca binaria*/		
+		int limiteSuperior = sequencia.size() - 1;
 		int meio = 0;
 		int limiteInferior = 0;
 		bool numeroExiste = false;
@@ -82,9 +83,10 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 			}
 			
 		}
-
+		
+		//Caso o valor não exista, colocamos ele na posição de indice i + 1, pois o primeiro valor deve ser 1 
 		if(!numeroExiste) {
-			s->sequence.insert(i + 1, numeroEscolhido);
+			s->sequence.insert(s->sequence.begin() + i + 1, numeroEscolhido);
 		}
 		else {
 			i--;
@@ -111,6 +113,7 @@ Solution * Construction(int dimensao) {
 }
 
 int main() {
-
+	
+	Solution* s = Construction(10);	
 	return 0;
 }
