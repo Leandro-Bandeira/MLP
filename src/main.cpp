@@ -57,7 +57,7 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 		int numeroEscolhido = dist(gen);
 		
 		std::sort(sequencia.begin(), sequencia.end()); // Organiza os valores para aplicar a busca binária
-		/* Aplicando busca binaria		
+		/* Aplicando busca binaria	*/		
 		int limiteSuperior = sequencia.size() - 1;
 		int meio = 0;
 		int limiteInferior = 0;
@@ -65,7 +65,7 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 		
 		
 		
-		while(limiteInferior < limiteSuperior) {
+		while(limiteInferior <= limiteSuperior) {
 			
 			meio = (limiteInferior + limiteSuperior) / 2;
 
@@ -86,11 +86,11 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 			}
 			
 		}
-		*/
+		
 		
 		// Adiciona a partir do índice 1, pois o 0 é o valor 1 2 4 5 3 1, temos que ter essa sequência
 		// Caso ele não acha o velor, adiciona referente ao ponto adicionado
-				
+		/*				
 		if(!std::binary_search(sequencia.begin(), sequencia.end(), numeroEscolhido)) {
 			//Atualiza os dois vetores
 			sequencia.insert(sequencia.begin() + adicionados + 1, numeroEscolhido);
@@ -99,13 +99,13 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 		}
 		
 		//Caso o valor não exista, colocamos ele na posição de indice i + 1, pois o primeiro valor deve ser 1 
-		/*
+		*/
 		if(!numeroExiste) {
 			s->sequence.insert(s->sequence.begin() + (adicionados + 1), numeroEscolhido);
 			sequencia.insert(sequencia.begin() + (adicionados + 1), numeroEscolhido);
 			++adicionados;
 		}
-		*/
+		
 
 
 	}
@@ -120,6 +120,7 @@ Solution * Construction(int dimensao) {
 	/* Escolhe inicialmente 3 valores aleatórios	*/
 	escolher3Aleatorios(s, dimensao);
 	
+
 	/* Gera CL - Candidate list	*/
 	std::vector < int > sequencia(s->sequence);
 	std::sort(sequencia.begin(), sequencia.end()); // Organiza  para poder utilizar o binary_search
@@ -149,10 +150,12 @@ Solution * Construction(int dimensao) {
 	*/
 	
 	/* Enquanto CL não estiver vazio*/
-
+	
+	/*
 	while(!CL.empty()) {
 		
 	}
+	*/
 	return s;
 }
 
