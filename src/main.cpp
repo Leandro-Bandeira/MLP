@@ -8,7 +8,12 @@
 
 #define TAMANHO 100;
 
-int t[100][100];
+int t[100][100];  
+
+
+
+
+
 
 typedef struct Subsequence {
 
@@ -135,32 +140,51 @@ Solution * Construction(int dimensao) {
 
 	}
 	
-	/*
-	for(int i = 0; i < s->sequence.size(); i++) {
+	int origem = 0;
+	
+	/* A partir de CL, vamos criar uma lista chamada RCL, que são os melhores candidados da distancia deles até a origem*/
+	/* Primeiramente temos que colocar CL em ordem crescente da sua distancia da origem*/
+	while(CL.empty()) {
 
-		std::cout << s->sequence[i] << " ";
-	}
-	std::cout << '\n';
-	
-	for(int i = 0; i < CL.size(); i++) {
-		std::cout << CL[i] << " ";
-	}
-	std::cout << '\n';
 
-	*/
-	
-	/* Enquanto CL não estiver vazio*/
-	
-	/*
-	while(!CL.empty()) {
-		
+
 	}
-	*/
+
+	
 	return s;
 }
 
 int main() {
 	
+	int dimensao = 0;
+	std::cin >> dimensao;
+
+	int** matriz = new int*[dimensao];
+
+	for(int i = 0; i < dimensao; i++) {
+
+		matriz[i] = new int(dimensao);
+
+		for(int j = 0; j < dimensao; j++) {
+
+			std::cin >> matriz[i][j];
+		}
+	}
+	
 	Solution* s = Construction(10);	
+	
+	for(int i = 0; i < dimensao; i++) {
+
+		for(int j = 0; j < dimensao; j++) {
+
+			std::cout << matriz[i][j] << " ";
+		}
+		std::cout << std::endl;
+	}
+	for(int i = 0; i < dimensao; i++) {
+
+
+			delete matriz[i];
+	}
 	return 0;
 }
