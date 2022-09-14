@@ -2,8 +2,8 @@
 #include <vector>
 #include <random>
 #include <algorithm>
-
-
+#include <sstream>
+#include <ctype.h> //Adiciona o isalnum
 
 
 #define TAMANHO 100;
@@ -118,7 +118,15 @@ void escolher3Aleatorios(Solution* s, int dimensao) {
 
 }
 
-Solution * Construction(int dimensao) {
+
+bool comparaValores(int A, int B, int **matriz) {
+
+	if(matriz[A][0] < matriz[B][0])
+		return true;
+
+	return false;
+}
+Solution * Construction(int dimensao, int** matriz) {
 
 	Solution* s = new Solution(); // Inicializa uma solução
 	
@@ -140,30 +148,90 @@ Solution * Construction(int dimensao) {
 
 	}
 	
-	int origem = 0;
+	int r = 0; // Origem
 	
 	/* A partir de CL, vamos criar uma lista chamada RCL, que são os melhores candidados da distancia deles até a origem*/
 	/* Primeiramente temos que colocar CL em ordem crescente da sua distancia da origem*/
-	while(CL.empty()) {
+	while(!CL.empty()) {
+	
+		
+		/*O método sort pode receber uma função como terceiro parametro, dito isso ele está recebendo uma função lambda
+		 * Cada valor da função CL, será passado para a função em forma de A e B, por passagem de valor, desse modo 
+		 * podemos comparar as matrizes de cada um e agrupá-los em forma crescente da menor distancia*/
+		
+		// Devemos retirar 1, porque CL contém os pontos de 1 ate o ponto de dimensao, mas matriz vai de 0 ate dimensao - 1
+		std::sort(CL.begin(), CL.end(), [=](int A, int B) {
+			return matriz[A - 1][r] < matriz[B - 1][r];
+		});
+		
+		
+		std::random_device rd;
+		std::mt19937 gen(rd());
+		std::uniform_int_distribution<>alpha(1, CL.size());
+		
+		std::vector < int > RCL;
+		int quantiaMelhoresCandidatos = alpha(gen);
+		
+		std::cout << "quantiaMelhores: " << quantiaMelhoresCandidatos << std::endl;
+		unsigned seed(time(0));
+		std::srand(seed);
+		
+		for(int i = 0; i < quantiaMelhoresCandidatos; i++) {
+			int candidato = (std::rand() % CL.size());
+			RCL.push_back(CL[candidato]);
+			CL.erase(CL.begin() + candidato);
+		}
+		std::cout << "--------------------------------------------------" << std::endl;
+		for(int i = 0; i < CL.size(); i++) {
 
+			std::cout << CL[i] << " ";
 
+		}
+		std::cout << std::endl;
 
-	}
+		for(int i = 0; i < RCL.size(); i++) {
+
+			std::cout << RCL[i] << " ";
+		}
+		std::cout << std::endl;
+		std::cout << "-------------------------------------------------------" << std::endl; 
+
+		
+	}  
 
 	
 	return s;
 }
 
 int main() {
+
+	/*	Organiza a entrada de dados para pegar a dimensao	*/
+	std::string dimensaoDados;
+
+	std::getline(std::cin, dimensaoDados);
 	
-	int dimensao = 0;
-	std::cin >> dimensao;
+	int tamanhoString = dimensaoDados.size();
+	while(1) {
+		
+		if(isdigit(dimensaoDados[0])) {
+			break;
+		}
 
+		dimensaoDados.erase(dimensaoDados.begin());
+	}	 
+
+	int dimensao = std::stoi(dimensaoDados);
+	
+	/* Criação da matriz de custos------------------	*/
 	int** matriz = new int*[dimensao];
-
+	
 	for(int i = 0; i < dimensao; i++) {
 
-		matriz[i] = new int(dimensao);
+		matriz[i] = new int[dimensao];
+	}
+
+
+	for(int i = 0; i < dimensao; i++) {
 
 		for(int j = 0; j < dimensao; j++) {
 
@@ -171,16 +239,9 @@ int main() {
 		}
 	}
 	
-	Solution* s = Construction(10);	
-	
-	for(int i = 0; i < dimensao; i++) {
+	/*-------------------------------------------------*/
 
-		for(int j = 0; j < dimensao; j++) {
-
-			std::cout << matriz[i][j] << " ";
-		}
-		std::cout << std::endl;
-	}
+	Solution* s = Construction(dimensao, matriz);	
 	for(int i = 0; i < dimensao; i++) {
 
 
