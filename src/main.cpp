@@ -156,12 +156,6 @@ Solution * Construction(int dimensao, int** matriz) {
 	/* Primeiramente temos que colocar CL em ordem crescente da sua distancia da origem*/
 	while(!CL.empty()) {
 		
-		std::cout << "\nCL\n";
-		for(int i = 0; i < CL.size(); i++) {
-
-			std::cout << CL[i] << " ";
-		}
-		std::cout << "\nFim"<<std::endl;
 		/*O método sort pode receber uma função como terceiro parametro, dito isso ele está recebendo uma função lambda
 		 * Cada valor da função CL, será passado para a função em forma de A e B, por passagem de valor, desse modo 
 		 * podemos comparar as matrizes de cada um e agrupá-los em forma crescente da menor distancia*/
@@ -171,6 +165,13 @@ Solution * Construction(int dimensao, int** matriz) {
 			return matriz[A - 1][r - 1] < matriz[B - 1][r - 1];
 		});
 		
+		std::cout << "\nCL\n";
+		for(int i = 0; i < CL.size(); i++) {
+
+			std::cout << CL[i] << " ";
+		}
+		std::cout << "\nFim"<<std::endl;
+	
 		/*Gera valor aleatorio entre 1 e o tamanho de CL */
 		std::random_device rd;
 		std::mt19937 gen(rd());
@@ -180,6 +181,7 @@ Solution * Construction(int dimensao, int** matriz) {
 		std::vector < int > RCL;
 		int quantiaMelhoresCandidatos = alpha(gen);
 		
+		std::cout << "quantiaCandidatos: " << quantiaMelhoresCandidatos << std::endl;
 		for(int i = 0; i < quantiaMelhoresCandidatos; i++) {
 			RCL.push_back(CL[i]);
 		}
@@ -197,19 +199,28 @@ Solution * Construction(int dimensao, int** matriz) {
 		int selecionado = std::rand() % RCL.size(); // Pega um indice de RCL aleatoriamente
 		s->sequence.insert(s->sequence.begin() + insercaoIndice, RCL[selecionado]);
 		
+		std::cout << "valor selecionado: " << RCL[selecionado] << std::endl;
 		/* Remoçao do elemento de CL*/
 		
 		for(int i = 0; i < CL.size(); i++) {
-			if(selecionado == CL[i]) {
+			if(RCL[selecionado] == CL[i]) {
 
 				CL.erase(CL.begin() + i);
 			}
 		}
-		r = selecionado;
+		
+		std::cout << "\nCL(new)\n";
+		for(int i = 0; i < CL.size(); i++) {
+
+			std::cout << CL[i] << " ";
+		}
+		std::cout << std::endl;
+		r = RCL[selecionado];
 		insercaoIndice++;
 
 
-		getchar();	
+		getchar();
+		
 	}  
 
 	std::cout << "here" << std::endl;	
