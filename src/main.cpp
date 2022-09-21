@@ -52,6 +52,8 @@ Solution * Construction(int dimensao, int** matriz) {
 
 	Solution* s = new Solution(); // Inicializa uma solução
 	std::vector < int > CL;	
+
+	
 	/* Criação da lista de candidatos	*/
 	for(int i = 2; i <= dimensao; i++) {
 
@@ -74,12 +76,6 @@ Solution * Construction(int dimensao, int** matriz) {
 			return matriz[A - 1][r - 1] < matriz[B - 1][r - 1];
 		});
 		
-		std::cout << "\nCL\n";
-		for(int i = 0; i < CL.size(); i++) {
-
-			std::cout << CL[i] << " ";
-		}
-		std::cout << "\nFim"<<std::endl;
 	
 		/*Gera valor aleatorio entre 1 e o tamanho de CL */
 		std::random_device rd;
@@ -90,16 +86,10 @@ Solution * Construction(int dimensao, int** matriz) {
 		std::vector < int > RCL;
 		int quantiaMelhoresCandidatos = alpha(gen);
 		
-		std::cout << "quantiaCandidatos: " << quantiaMelhoresCandidatos << std::endl;
+		
 		for(int i = 0; i < quantiaMelhoresCandidatos; i++) {
 			RCL.push_back(CL[i]);
 		}
-		std::cout << "\nRCL\n";
-		for(int i = 0; i < RCL.size(); i++) {
-
-			std::cout << RCL[i] << " ";
-		}
-		std::cout <<"\nRCLFim\n"<<std::endl;
 		/* Vamos escolher aleatoriamente um valor de RCL	*/
 		
 		unsigned seed(time(0));
@@ -108,31 +98,27 @@ Solution * Construction(int dimensao, int** matriz) {
 		int selecionado = std::rand() % RCL.size(); // Pega um indice de RCL aleatoriamente
 		s->sequence.insert(s->sequence.begin() + insercaoIndice, RCL[selecionado]);
 		
-		std::cout << "valor selecionado: " << RCL[selecionado] << std::endl;
-		/* Remoçao do elemento de CL*/
+	
+		/* Remoçao do elemento de CL */
 		
-		for(int i = 0; i < CL.size(); i++) {
-			if(RCL[selecionado] == CL[i]) {
+		std::vector < int >::iterator it;
 
-				CL.erase(CL.begin() + i);
-			}
+		it = std::find(CL.begin(), CL.end(), RCL[selecionado]);
+
+		if(it != CL.end()) {
+
+			CL.erase(it);
 		}
 		
-		std::cout << "\nCL(new)\n";
-		for(int i = 0; i < CL.size(); i++) {
-
-			std::cout << CL[i] << " ";
-		}
-		std::cout << std::endl;
 		r = RCL[selecionado];
 		insercaoIndice++;
 
 
-		getchar();
+		
 		
 	}  
 
-	std::cout << "here" << std::endl;	
+	
 	return s;
 }
 
