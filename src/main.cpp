@@ -122,6 +122,32 @@ Solution * Construction(int dimensao, int** matriz) {
 	return s;
 }
 
+void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subseq_matrix) {
+	
+	int n =  s->sequence.size(); // Numero de nós da instancia
+
+	/*Atualiza as subsequencias de um unico nó
+	 * O custo de atraso = 0 se for o primeiro nó, caso não é 1
+	 * O custo = 0
+	 * O tempo = 0	*/
+	
+	// Depois vamos juntar em um unico for
+	/*
+	 * Imagina uma matriz, e as subsequencias de um unico nó formam a diagonal principal
+	 * Lembrando que, subseq_matrix[i][j] contém as informações da subsequencia que vai de i ate j*/
+	for(int i = 0; i < n; i++) {
+		
+		int v = s->sequence[i];
+
+		subseq_matrix[i][i].W = (i > 0);
+		subseq_matrix[i][i].C = 0;
+		subseq_matrix[i][i].T = 0;
+		subseq_matrix[i][i].first = v;
+		subseq_matrix[i][i].last = v;
+	}
+
+}
+
 int main() {
 
 	/*	Organiza a entrada de dados para pegar a dimensao	*/
@@ -161,13 +187,21 @@ int main() {
 	/*-------------------------------------------------*/
 
 	Solution* s = Construction(dimensao, matriz);
-
+	
+	/*
 	std::cout << "sequencia apos construcao" << std::endl;
 	for(int i = 0; i < s->sequence.size(); i++) {
 
 		std::cout << s->sequence[i] << " ";
 	}
 	std::cout << "-------------------------------------------" << std::endl;
+	*/
+
+	/* Matriz com todas as subsequencia
+	 * a subseq_matrix[i][j] armazena informações da subsequencia que inicia em i e termina em j	*/
+
+	std::vector < std::vector < Subsequence > > subseq_matrix(dimensao, std::vector < Subsequence >(dimensao));
+	
 
 	for(int i = 0; i < dimensao; i++) {
 
