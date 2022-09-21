@@ -46,103 +46,12 @@ typedef struct {
 
 
 
-void escolher3Aleatorios(Solution* s, int dimensao) {
-		
-	std::random_device rd;
-	std::mt19937 gen(rd());
-
-	std::uniform_int_distribution<>dist(2, dimensao); // Gera numeros aleatorios de 2 até a dimensão dada
-	
-	std::vector < int > sequencia = s->sequence; // inicializa um vetor temporario com os dados do antigo
-	
-
-	int adicionados = 0;
-	while(adicionados < 3) {
-
-		int numeroEscolhido = dist(gen);
-		
-		std::sort(sequencia.begin(), sequencia.end()); // Organiza os valores para aplicar a busca binária
-		/* Aplicando busca binaria	*/		
-		int limiteSuperior = sequencia.size() - 1;
-		int meio = 0;
-		int limiteInferior = 0;
-		bool numeroExiste = false;
-		
-		
-		
-		while(limiteInferior <= limiteSuperior) {
-			
-			meio = (limiteInferior + limiteSuperior) / 2;
-
-			int valorCentral = sequencia[meio];
-
-			if(valorCentral == numeroEscolhido) {
-
-				numeroExiste = true;
-				break;
-			}
-			if (valorCentral > numeroEscolhido){
-				
-				limiteSuperior = meio - 1;
-
-			}
-			else {
-				limiteInferior = meio + 1;
-			}
-			
-		}
-		
-		
-		// Adiciona a partir do índice 1, pois o 0 é o valor 1 2 4 5 3 1, temos que ter essa sequência
-		// Caso ele não acha o velor, adiciona referente ao ponto adicionado
-		/*				
-		if(!std::binary_search(sequencia.begin(), sequencia.end(), numeroEscolhido)) {
-			//Atualiza os dois vetores
-			sequencia.insert(sequencia.begin() + adicionados + 1, numeroEscolhido);
-			s->sequence.insert(s->sequence.begin() + (adicionados + 1), numeroEscolhido);
-			++adicionados;
-		}
-		
-		//Caso o valor não exista, colocamos ele na posição de indice i + 1, pois o primeiro valor deve ser 1 
-		*/
-		if(!numeroExiste) {
-			s->sequence.insert(s->sequence.begin() + (adicionados + 1), numeroEscolhido);
-			sequencia.insert(sequencia.begin() + (adicionados + 1), numeroEscolhido);
-			++adicionados;
-		}
-		
-
-
-	}
-
-
-}
 
 
 Solution * Construction(int dimensao, int** matriz) {
 
 	Solution* s = new Solution(); // Inicializa uma solução
 	std::vector < int > CL;	
-	/*
-	/* Escolhe inicialmente 3 valores aleatórios
-	escolher3Aleatorios(s, dimensao);
-	
-
-	/* Gera CL - Candidate list	
-	std::vector < int > sequencia(s->sequence);
-	std::sort(sequencia.begin(), sequencia.end()); // Organiza  para poder utilizar o binary_search
-	std::vector < int > CL; // Candidate list
-	/* Percorre todos os valores de 2 até o valor da dimensão, verifica se ele está dentro da sequencia da solução, caso não o adiciona
-	for(int i = 2; i <= dimensao; i++) {
-		
-		/* Caso o valor de i não esteja na sequencia, adiciona na lista de candidato 
-		if(!std::binary_search(sequencia.begin(), sequencia.end(), i)) {
-			CL.push_back(i);
-		}
-
-	}
-	*/
-	
 	/* Criação da lista de candidatos	*/
 	for(int i = 2; i <= dimensao; i++) {
 
