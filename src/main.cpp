@@ -21,16 +21,18 @@ typedef struct Subsequence {
 	int first, last; // primeiro e último nós da subsequência
 
 	inline static Subsequence Concatenate(Subsequence& sigma_1, Subsequence& sigma_2) {
+		std::cout << "entrou" << std::endl;
 		Subsequence sigma; // Subsequencia gerada pela concatenação
 		/* Tempo do último nó da subsequência 1, até o primeiro nó da segunda	*/
 		double temp = t[sigma_1.last][sigma_2.first];
+		std::cout << "acessou" << std::endl;
 		sigma.W = sigma_1.W + sigma_2.W; // Calculo do custo de atraso
 		sigma.T = sigma_1.T + temp + sigma_2.T; // Calculo do tempo total
 		sigma.C = sigma_1.C + sigma_2.W * (sigma_1.T + temp) + sigma_2.C;
 
 		sigma.first = sigma_1.first;
 		sigma.last = sigma_2.last;
-		
+		std::cout << "terminou a funcao" << std::endl;	
 		return sigma;
 	}
 }Subsequence;
@@ -40,6 +42,7 @@ typedef struct {
 	/* Toda solução possui uma sequencia inicial hamiltoniana, começa e inicia no primeiro nó. */
 	std::vector < int > sequence = {1, 1};
 	double cost;
+
 }Solution;
 
 
@@ -120,66 +123,6 @@ Solution * Construction(int dimensao, int** matriz) {
 	return s;
 }
 
-
-double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < Subsequence > >& subseq_matrix) {
-	/* Dado uma solução 1 2 3 4 5 6 1
-	 * Queremos dar swap em 2 e 3, que são os índices i = 1 e j = 2
-	 * Logo, toda essa parte eh formada por uma concatenação da subsequencia que vai de 1->1 e 2->2,
-	 * subseq_matrix[i][j] = Subsequence::Concatenate(subseq_matrix[i][j - 1], subseq_matrix[j][j])
-	 * Se dermos swap, temos a solução 1 3 2 4 5 6 1, agora a subseq_matrix[i][j] deve ser atualizada, pois seus valores mudaram
-	 * Perceba que agora vamos de 1 para 3 e não 1 para 2, assim como vamos de 2 para 4
-	 * Logo, subseq_matrix[i][j] = Subsequence::Concatenate(subseq_matrix[i + 1][j]) */
-
-	Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[i + 1][j])
-	return 2;
-}
-bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
-	double bestDelta = 0;
-	int best_i, best_j;
-	
-	/* Pegamos a partir do primeiro indice e não pegamos o ultimo pois a sequencia é da seguinte forma 1 2 3 4 5 1	*/
-	/* Ponto 1 do inicio e final sao fixos	*/
-	for(int i = 1; i < s->sequence.size() - 1; i++) {
-		
-		for(int j = i + 1; i < s->sequence.size() - 1; j++) {
-
-			double delta = calculateSwapCost(s, i, j, subseq_matrix);
-
-			if(delta < bestDelta) {
-				bestDelta = delta;
-				best_i = i;
-				best_j = j;
-			}
-		}
-	}
-	if(bestDelta < 0) {
-		
-		std::swap(s->sequence[best_i], s->sequence[best_j]);
-		s->cost -= bestDelta;
-		return true;
-	}
-
-	return false;
-}
-
-
-void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
-	std::vector < int > NL = {1, 2, 3, 4, 5};
-	bool improved = false;
-
-
-	while(!NL.empty()) {
-		int n = std::rand() % NL.size();
-
-		switch(NL[n]) {
-			
-			case 1:
-				improved = bestImprovementSwap(s, subseq_matrix);
-				break;
-		}
-	}
-}
-
 void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subseq_matrix) {
 	
 	int n =  s->sequence.size() - 1; // Numero de nós da instancia, retira 1, pois a solução é 1 2 3 4 5 1, porém ela só tem 5 nós não 6.
@@ -235,7 +178,88 @@ void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subse
 	}
 	
 	std::cout << "Atualizou as subsequencias\n";
+	s->cost = subseq_matrix[0][n - 1].C;
 }
+
+
+
+double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < Subsequence > >& subseq_matrix) {
+	/* Dado uma solução 1 2 3 4 5 6 1
+	 * Queremos dar swap em 2 e 3, que são os índices i = 1 e j = 2
+	 * Logo, toda essa parte eh formada por uma concatenação da subsequencia que vai de 1->1 e 2->2,
+	 * subseq_matrix[i][j] = Subsequence::Concatenate(subseq_matrix[i][j - 1], subseq_matrix[j][j])
+	 * Vamos supor que tenhamos a solução 1 2 3 4 5 6 7 8 9 e temos os indices i = 3 j = 6 para dar swap
+	 * 1 2 3 7 5 6 4 8 9
+	 * Temos sequencias que nao se alteram de 0 até i - 1, j + 1 até n - 1, e a central i + 1 ate j - 1
+	 * 1 2 não se alteram
+	 * 8 9 não se alteram
+	 * 5 6 não se alteram
+	 * Apenas de 3 -> 7 e 6 -> 4	*/
+
+	int n =  s->sequence.size() - 1;
+	std::cout << "valor de n: " << n << std::endl;
+	//Vamos concatenar primeiro a anterior da central com a subsequencia central
+	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[j][i + 1], subseq_matrix[i + 1][j - 1]);
+	std::cout << "primeiro sigma\n";
+	//Concatena a depois do centro até o fim
+	Subsequence sigmaPosterior = Subsequence::Concatenate(subseq_matrix[j - 1][i], subseq_matrix[j][n - 1]);
+	std::cout << "segundo sigma\n";
+	Subsequence sigma1 = Subsequence::Concatenate(sigmaCentral, sigmaPosterior);
+	std::cout << "terceiro sigma\n";
+	// Nova subsequencia com swap
+	Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[0][i - 1], sigma1);
+
+	return sigma2.C; // retorna o custo
+}
+bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
+	double bestDelta = 0;
+	int best_i, best_j;
+	
+	/* Pegamos a partir do primeiro indice e não pegamos o ultimo pois a sequencia é da seguinte forma 1 2 3 4 5 1	*/
+	/* Ponto 1 do inicio e final sao fixos	*/
+	for(int i = 1; i < s->sequence.size() - 1; i++) {
+		
+		for(int j = i + 1; i < s->sequence.size() - 1; j++) {
+
+			double delta = calculateSwapCost(s, i, j, subseq_matrix);
+			std::cout << "i: " << i << " j: " << j << std::endl;
+			if(delta < bestDelta) {
+				bestDelta = delta;
+				best_i = i;
+				best_j = j;
+			}
+		}
+	}
+	if(bestDelta < 0) {
+		std::cout << "fez swap" << std::endl;	
+		std::swap(s->sequence[best_i], s->sequence[best_j]);
+		s->cost = bestDelta;
+		updateAllSubseq(s, subseq_matrix);
+
+		return true;
+	}
+
+	return false;
+}
+
+
+void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
+	std::vector < int > NL = {1, 2, 3, 4, 5};
+	bool improved = false;
+
+
+	while(!NL.empty()) {
+		int n = std::rand() % NL.size();
+
+		switch(NL[n]) {
+			
+			case 1:
+				improved = bestImprovementSwap(s, subseq_matrix);
+				break;
+		}
+	}
+}
+
 
 int main() {
 
@@ -294,6 +318,12 @@ int main() {
 	
 	
 	updateAllSubseq(s, subseq_matrix);
+	buscaLocal(s, subseq_matrix);
+	
+	for(int i = 0; i < s->sequence.size(); i++) {
+		std::cout << s->sequence[i] << " ";
+	}
+	std::cout << std::endl;
 	for(int i = 0; i < dimensao; i++) {
 
 
