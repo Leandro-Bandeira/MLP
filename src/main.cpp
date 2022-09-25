@@ -4,8 +4,10 @@
 #include <algorithm>
 #include <sstream>
 #include <ctype.h> //Adiciona o isalnum
-
-
+#include <limits>
+#include <sstream>
+#include <ios>
+#include <fstream>
 
 int **t;  
 
@@ -21,18 +23,19 @@ typedef struct Subsequence {
 	int first, last; // primeiro e último nós da subsequência
 
 	inline static Subsequence Concatenate(Subsequence& sigma_1, Subsequence& sigma_2) {
-		std::cout << "entrou" << std::endl;
+	//	std::cout << "entrou" << std::endl;
 		Subsequence sigma; // Subsequencia gerada pela concatenação
 		/* Tempo do último nó da subsequência 1, até o primeiro nó da segunda	*/
+	//	std::cout << "sigma1.last: " << sigma_1.last  << " sigma_2.first: " << sigma_2.first << std::endl;
 		double temp = t[sigma_1.last][sigma_2.first];
-		std::cout << "acessou" << std::endl;
+	//	std::cout << "acessou" << std::endl;
 		sigma.W = sigma_1.W + sigma_2.W; // Calculo do custo de atraso
 		sigma.T = sigma_1.T + temp + sigma_2.T; // Calculo do tempo total
 		sigma.C = sigma_1.C + sigma_2.W * (sigma_1.T + temp) + sigma_2.C;
 
 		sigma.first = sigma_1.first;
 		sigma.last = sigma_2.last;
-		std::cout << "terminou a funcao" << std::endl;	
+	//		std::cout << "terminou a funcao" << std::endl;	
 		return sigma;
 	}
 }Subsequence;
@@ -179,6 +182,7 @@ void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subse
 	
 	std::cout << "Atualizou as subsequencias\n";
 	s->cost = subseq_matrix[0][n - 1].C;
+	std::cout << "custo inicial: " << s->cost;
 }
 
 
@@ -197,7 +201,9 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	 * Apenas de 3 -> 7 e 6 -> 4	*/
 
 	int n =  s->sequence.size() - 1;
-	std::cout << "valor de n: " << n << std::endl;
+//	std::cout << "valor de n: " << n << std::endl;
+
+	/*
 	//Vamos concatenar primeiro a anterior da central com a subsequencia central
 	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[j][i + 1], subseq_matrix[i + 1][j - 1]);
 	std::cout << "primeiro sigma\n";
@@ -208,34 +214,47 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	std::cout << "terceiro sigma\n";
 	// Nova subsequencia com swap
 	Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[0][i - 1], sigma1);
+	*/
+	Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i + 1]);
+	//std::cout << "fez o sigma1\n";
 
+	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[i + 1][j - 1], subseq_matrix[j - 1][i]);
+	//std::cout << "fez o sigmaCentral\n";
+	Subsequence sigma  = Subsequence::Concatenate(sigma1, sigmaCentral);
+	//std::cout << "fez o sigma\n";
+	Subsequence sigma2 = Subsequence::Concatenate(sigma, subseq_matrix[j + 1][n - 1]);
+	std::cout << "custo do swap: " << sigma2.C;
 	return sigma2.C; // retorna o custo
 }
 bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
-	double bestDelta = 0;
+	double bestDelta = s->cost ;
 	int best_i, best_j;
 	
 	/* Pegamos a partir do primeiro indice e não pegamos o ultimo pois a sequencia é da seguinte forma 1 2 3 4 5 1	*/
 	/* Ponto 1 do inicio e final sao fixos	*/
+	/* 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1	*/
+	/* Colocamos até j < s->sequencia.size() - 2, pois damos j + 1, ou seja se j = 13, se dermos +1 ocorre falha de memoria	*/
 	for(int i = 1; i < s->sequence.size() - 1; i++) {
 		
-		for(int j = i + 1; i < s->sequence.size() - 1; j++) {
+		for(int j = i + 1; j  < s->sequence.size() - 2; j++) {
 
 			double delta = calculateSwapCost(s, i, j, subseq_matrix);
 			std::cout << "i: " << i << " j: " << j << std::endl;
 			if(delta < bestDelta) {
+				std::cout << "achou troca melhor" << std::endl;
 				bestDelta = delta;
 				best_i = i;
 				best_j = j;
+				getchar();
 			}
 		}
 	}
 	if(bestDelta < 0) {
-		std::cout << "fez swap" << std::endl;	
+		std::cout << "fez swap";	
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
 		s->cost = bestDelta;
 		updateAllSubseq(s, subseq_matrix);
-
+		std::getchar();
 		return true;
 	}
 
@@ -261,13 +280,16 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 }
 
 
-int main() {
+int main(int argc, char** argv) {
+	
 
 	/*	Organiza a entrada de dados para pegar a dimensao	*/
 	std::string dimensaoDados;
-
-	std::getline(std::cin, dimensaoDados);
+	std::fstream arquivo;
 	
+	arquivo.open(argv[1], std::ios::in);
+	
+	std::getline(arquivo, dimensaoDados);
 	int tamanhoString = dimensaoDados.size();
 	while(1) {
 		
@@ -279,7 +301,7 @@ int main() {
 	}	 
 
 	int dimensao = std::stoi(dimensaoDados);
-	
+
 	/* Criação da matriz de custos------------------	*/
 	int** matriz = new int*[dimensao];
 	
@@ -287,19 +309,43 @@ int main() {
 
 		matriz[i] = new int[dimensao];
 	}
+	
+	/* Vector que irá conter todos os valores de distancia	*/
+	std::vector < int > valoresLinha;
 
+	/* Leitura do arquivo e separa os valores para armazenar no vector anterior	*/
+	while(1) {
 
+		if(arquivo.eof()) {
+			break;
+		}
+		std::string linha;
+
+		std::getline(arquivo, linha);
+
+		std::stringstream linhaDados(linha);
+
+		std::string palavra;
+
+		while(std::getline(linhaDados, palavra, ' ')) {
+
+			valoresLinha.push_back(std::stoi(palavra));
+		}
+
+	}
+
+	int indice = 0;
 	for(int i = 0; i < dimensao; i++) {
 
 		for(int j = 0; j < dimensao; j++) {
 
-			std::cin >> matriz[i][j];
+			matriz[i][j] = valoresLinha[indice];
+			indice++;
 		}
 	}
 	t = matriz; // atualiza o vetor de custos que será utilizado na concatenação
- 
+	
 	/*-------------------------------------------------*/
-
 	Solution* s = Construction(dimensao, matriz);
 	
 	
@@ -314,12 +360,11 @@ int main() {
 	 * a subseq_matrix[i][j] armazena informações da subsequencia que inicia em i e termina em j relativo a solução s	*/
 	
 	
-	std::vector < std::vector < Subsequence > > subseq_matrix(dimensao, std::vector < Subsequence >(dimensao));
-	
-	
+	std::vector < std::vector < Subsequence > > subseq_matrix(dimensao, std::vector < Subsequence >(dimensao));	
 	updateAllSubseq(s, subseq_matrix);
-	buscaLocal(s, subseq_matrix);
 	
+	buscaLocal(s, subseq_matrix);
+	getchar();	
 	for(int i = 0; i < s->sequence.size(); i++) {
 		std::cout << s->sequence[i] << " ";
 	}
