@@ -182,7 +182,7 @@ void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subse
 	
 	std::cout << "Atualizou as subsequencias\n";
 	s->cost = subseq_matrix[0][n - 1].C;
-	std::cout << "custo inicial: " << s->cost;
+	std::cout << "custo inicial: " << s->cost << std::endl;
 }
 
 
@@ -201,29 +201,17 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	 * Apenas de 3 -> 7 e 6 -> 4	*/
 
 	int n =  s->sequence.size() - 1;
-//	std::cout << "valor de n: " << n << std::endl;
 
 	/*
-	//Vamos concatenar primeiro a anterior da central com a subsequencia central
-	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[j][i + 1], subseq_matrix[i + 1][j - 1]);
-	std::cout << "primeiro sigma\n";
-	//Concatena a depois do centro até o fim
-	Subsequence sigmaPosterior = Subsequence::Concatenate(subseq_matrix[j - 1][i], subseq_matrix[j][n - 1]);
-	std::cout << "segundo sigma\n";
-	Subsequence sigma1 = Subsequence::Concatenate(sigmaCentral, sigmaPosterior);
-	std::cout << "terceiro sigma\n";
-	// Nova subsequencia com swap
-	Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[0][i - 1], sigma1);
+	 * Perceba que dividimos em uma subsequencia que vai do nó inicial até o nó anterior ao da troca concatenado com o nó da troca.
+	 * A segunda subsequencia eh formada pela concatenação do posterior i da troca até o valor J da troca, com o valor trocado de i no lugar de J
+	 * A terceira, é formada pelo sigma1 até o centro e por fim concatena tudo isso até o fim da subsequencia
 	*/
 	Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i + 1]);
-	//std::cout << "fez o sigma1\n";
 
 	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[i + 1][j - 1], subseq_matrix[j - 1][i]);
-	//std::cout << "fez o sigmaCentral\n";
 	Subsequence sigma  = Subsequence::Concatenate(sigma1, sigmaCentral);
-	//std::cout << "fez o sigma\n";
 	Subsequence sigma2 = Subsequence::Concatenate(sigma, subseq_matrix[j + 1][n - 1]);
-	std::cout << "custo do swap: " << sigma2.C;
 	return sigma2.C; // retorna o custo
 }
 bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
@@ -239,9 +227,8 @@ bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > 
 		for(int j = i + 1; j  < s->sequence.size() - 2; j++) {
 
 			double delta = calculateSwapCost(s, i, j, subseq_matrix);
-			std::cout << "i: " << i << " j: " << j << std::endl;
 			if(delta < bestDelta) {
-				std::cout << "achou troca melhor" << std::endl;
+				std::cout << "achou troca melhor: " << delta;
 				bestDelta = delta;
 				best_i = i;
 				best_j = j;
@@ -249,7 +236,7 @@ bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > 
 			}
 		}
 	}
-	if(bestDelta < 0) {
+	if(bestDelta != s->cost) {
 		std::cout << "fez swap";	
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
 		s->cost = bestDelta;
@@ -260,6 +247,57 @@ bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > 
 
 	return false;
 }
+
+bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>& subseq_matrix) {
+	
+	int n = s->sequence.size() - 1;
+	double bestDelta = s->cost;
+	int best_i, best_j;
+
+	for(int i = 1; i < s->sequence.size() - 1; i++) {
+
+		for(int j =  i + 2; j < s->sequence.size() -2; j++) {
+			
+			/* O movimento 2opt, vamos pegar duas arestas não adjacentes e inserir o caminho entre elas de forma invertida	*/
+			/* Dado o seguimento A B E D C F G H A	e os indices de troca 1 e 4	*/
+			/* O movimento 2Opt, irá gerar a nova soluçao como A B (C D E) F G H A	*/
+			/* Perceba que tudo de 0 até i, se manteve constante, como de j + 1 até n - 1, so mudou de i + 1 até J, que foi colocado de maneira invertida	*/
+
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i]); // subseq_matrix[j][i] já representa a subsequencia invertida de j até i
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][n - 1]);
+
+			if(sigma2.C < bestDelta) {
+				std::cout << "valor troca 2opt: " << sigma2.C << std::endl;
+				bestDelta = sigma2.C;
+				best_i = i;
+				best_j = j;
+				getchar();
+				std::cout << "ocorreu melhor trocar 2opt" << std::endl;
+			}
+		}
+	}
+
+	if(bestDelta != s->cost) {
+		
+		int posicaoInicial = best_i + 1;
+		int posicaoFinal = best_j;
+
+		while(posicaoFinal > posicaoInicial) {
+			
+			std::swap(s->sequence[posicaoInicial], s->sequence[posicaoFinal]);
+			posicaoFinal--;
+			posicaoInicial++;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+
+
+
 
 
 void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
@@ -275,6 +313,16 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 			case 1:
 				improved = bestImprovementSwap(s, subseq_matrix);
 				break;
+			case 2:
+				improved = bestImprovement2opt(s, subseq_matrix);
+				break;
+		}
+
+		if(improved) {
+			NL = {1, 2, 3, 4, 5};
+		}
+		else {
+			NL.erase(NL.begin() + n);
 		}
 	}
 }
