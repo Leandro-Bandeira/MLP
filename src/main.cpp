@@ -313,7 +313,7 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 	 * Assim como vamos criar uma de i até j + 1 e concatenar com o fim	*/
 	for(int i = 0; i < s->sequence.size() - 1; i++) {
 
-		for(int j = i + 1; j < s->sequence.size() - 1; j++) {
+		for(int j = i + 1; j < s->sequence.size() - 2; j++) {
 			
 			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 1][j]);
 			Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[i][j + 1], subseq_matrix[j + 1][n - 1]);
@@ -331,6 +331,14 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 
 	if(bestDelta != s->cost) {
 		
+		int posicaoInicial = best_i;
+		int posicaoFinal = best_j;
+
+		while(posicaoInicial < posicaoFinal) {
+
+			std::swap(s->sequence[best_i], s->sequence[best_i + 1]);
+			best_i++;
+		}
 
 		updateAllSubseq(s, subseq_matrix);
 
@@ -362,9 +370,11 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 			case 2:
 				improved = bestImprovement2opt(s, subseq_matrix);
 				break;
+			
 			case 3:
 				improved = bestImprovementOrOpt(s, subseq_matrix);
 				break;
+			
 		}
 
 		if(improved) {
