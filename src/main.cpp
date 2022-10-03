@@ -305,18 +305,21 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 	
 	/* O movimento reinsertion é pegar um nó e movê-lo para outro ponto, como
 	 * 1 2 3 4 5 6 7 8 9 10 1
-	 * Vamos pegar o nó 4 e transferir para o ponto 7
+	 * Vamos pegar o ponto 4 e transferir para o ponto 7
 	 * Sendo assim i = 3 e j = 6 
 	 * 1 2 3 5 6 7 4 8 9 10 1
 	 * Perceba que tudo de 0 até i - 1 se manteve, assim como tudo de j + 1 até n - 1
 	 * Vamos criar uma nova subsequencia com i - 1 até i + 1 e concatenar com i + 1 até j
 	 * Assim como vamos criar uma de i até j + 1 e concatenar com o fim	*/
-	for(int i = 0; i < s->sequence.size() - 1; i++) {
+	
+	for(int i = 1; i < s->sequence.size() - 1; i++) {
 
 		for(int j = i + 1; j < s->sequence.size() - 2; j++) {
 			
-			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 1][j]);
-			Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[i][j + 1], subseq_matrix[j + 1][n - 1]);
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i + 1]);
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[i+1][j-1]);
+			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j - 1][i]);
+			Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 1][n - 1]);
 
 			if(sigma2.C < bestDelta) {
 				std::cout << "achou melhor delta por OrOpt: " << sigma2.C << std::endl;
