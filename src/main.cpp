@@ -207,15 +207,23 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	 * A segunda subsequencia eh formada pela concatenação do posterior i da troca até o valor J da troca, com o valor trocado de i no lugar de J
 	 * A terceira, é formada pelo sigma1 até o centro e por fim concatena tudo isso até o fim da subsequencia
 	*/
-	Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i + 1]);
-
-	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[i + 1][j - 1], subseq_matrix[j - 1][i]);
+	
+	// Não vamos pegar a subsequencia invertida, de [j][i], pois se j = 2 e i = 5, pois representa a concatenação de todas as subsequencias de 2 até 5.
+	/*  Vamos pegar a subsequencia de 0 até i - 1 e concatenar com a subsequencia de um unico nó, que foi aquela trocada	*/
+	Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][j]);
+	
+	/* Mesma lógica que a anterior, concatena com a subsequencia de um unico nó	*/
+	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[i + 1][j - 1], subseq_matrix[i][i]);
+	
+	/* Concatena as duas anteriores	*/
 	Subsequence sigma  = Subsequence::Concatenate(sigma1, sigmaCentral);
+	
+	/* Concatena toda a inicial com a final que se manteve constante	*/
 	Subsequence sigma2 = Subsequence::Concatenate(sigma, subseq_matrix[j + 1][n - 1]);
 	return sigma2.C; // retorna o custo
 }
 bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
-	double bestDelta = s->cost ;
+	double bestDelta = s->cost;
 	int best_i, best_j;
 	
 	/* Pegamos a partir do primeiro indice e não pegamos o ultimo pois a sequencia é da seguinte forma 1 2 3 4 5 1	*/
@@ -237,7 +245,7 @@ bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > 
 		}
 	}
 	if(bestDelta != s->cost) {
-		std::cout << "fez swap";	
+		std::cout << "fez swap\n";	
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
 		s->cost = bestDelta;
 		updateAllSubseq(s, subseq_matrix);
@@ -304,10 +312,10 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 	int best_i, best_j;
 	
 	/* O movimento reinsertion é pegar um nó e movê-lo para outro ponto, como
-	 * 1 2 3 4 5 6 7 8 9 10 1
+	 * 1 2 3 (4) 5 6 7 8 9 10 1
 	 * Vamos pegar o ponto 4 e transferir para o ponto 7
 	 * Sendo assim i = 3 e j = 6 
-	 * 1 2 3 5 6 7 4 8 9 10 1
+	 * 1 2 3 5 6 7 (4) 8 9 10 1
 	 * Perceba que tudo de 0 até i - 1 se manteve, assim como tudo de j + 1 até n - 1
 	 * Vamos criar uma nova subsequencia com i - 1 até i + 1 e concatenar com i + 1 até j
 	 * Assim como vamos criar uma de i até j + 1 e concatenar com o fim	*/
@@ -316,28 +324,34 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 
 		for(int j = i + 1; j < s->sequence.size() - 2; j++) {
 			
-			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i + 1]);
-			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[i+1][j-1]);
-			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j - 1][i]);
-			Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 1][n - 1]);
+			/* Segue a mesma logica que o swap*/
+			/* Utilizamos a concatenação com i + 1 até o valor de j, que se perceber foi o que manteve fixo	*/
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 1][j]);
+			
+			/* Concatena sigma1 com o valor da subsequencia de um único nó de i	*/
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[i][i]);
+			
+			/* Concatena sigma 2 com a subsequencia final	*/
+			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 1][n - 1]);
 
-			if(sigma2.C < bestDelta) {
-				std::cout << "achou melhor delta por OrOpt: " << sigma2.C << std::endl;
+			//Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 1][n - 1]);
+			if(sigma3.C < bestDelta) {
+				std::cout << "achou melhor delta por OrOpt: " << sigma3.C << std::endl;
 				best_i = i;
 				best_j = j;
-				bestDelta = sigma2.C;
+				bestDelta = sigma3.C;
 			}
 
 		}
 
 	}
-
+	
 	if(bestDelta != s->cost) {
 		
 		int posicaoInicial = best_i;
 		int posicaoFinal = best_j;
 
-		while(posicaoInicial < posicaoFinal) {
+		while(best_i < best_j) {
 
 			std::swap(s->sequence[best_i], s->sequence[best_i + 1]);
 			best_i++;
@@ -356,6 +370,64 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 }
 
 
+bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
+
+	int n = s->sequence.size() - 1;
+	double bestDelta = s->cost;
+	
+	int best_i, best_j;
+
+	/* O movimento OrOpt2, é o mesmo que reinsertion porém para dois nós, exemplo:
+	 * Exemplo, vamos pegar i = 1 e j = 6 da sequencia
+	 * 1 (2 3) 4 5 6 7 8 9 1
+	 * Vamos pegar os nós i e i + 1, e transportar i para a posição j
+	 * 1 4 5 6 7 8 (2 3) 9 1
+	 * Logo, tudo de 0 até i - 1 se mantém fixo	*/
+	
+	// 1 2 3 4 5 6 7 8 9 1
+	// i = 1 e j = 7
+	// 1 4 5 6 7 8 9 2 3 1
+	/*Analisar novamente*/
+	for(int i = 1; i < s->sequence.size() - 1; i++){
+
+		for(int j = i + 2; j < s->sequence.size() - 3; j++) {
+			
+			// Subsequencia nova, após a saída dos valores seguidos, no exemplo anterior seriam 1 4 5 6 7 8
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 2][j + 1]);
+			
+			// Subsequencia formada pelos nós que serão deslocados pelo OrOpt no caso anterior 2 e 3
+			Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[i][i], subseq_matrix[i + 1][i + 1]);
+
+			Subsequence sigma3 = Subsequence::Concatenate(sigma1, sigma2); // Concatena sigma1 e sigma2
+			
+			std::cout << "quebrou";
+			Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 2][n - 1]);
+
+			if(sigma4.C < bestDelta) {
+				std::cout << "achou melhor delta por OrOpt2: " << sigma4.C << std::endl;
+				bestDelta = sigma4.C;
+				best_i = i;
+				best_j = j;
+			}
+
+		}
+	}
+
+	if(bestDelta != s->cost) {
+		//Devemos levar o primeiro valor de i até o valor de j
+		int posicaoInicial = best_i;
+		int posicaoFinal = best_j; 
+
+
+
+	}
+	
+	
+
+	return false;
+
+}
+
 
 void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
 	std::vector < int > NL = {1, 2, 3, 4, 5};
@@ -373,9 +445,13 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 			case 2:
 				improved = bestImprovement2opt(s, subseq_matrix);
 				break;
-			
+					
 			case 3:
 				improved = bestImprovementOrOpt(s, subseq_matrix);
+				break;
+			
+			case 4:
+				improved = bestImprovementOrOpt2(s, subseq_matrix);
 				break;
 			
 		}
