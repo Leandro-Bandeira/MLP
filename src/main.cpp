@@ -387,16 +387,17 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 	// i = 1 e j = 7
 	// 1 4 5 6 7 8 9 2 3 1
 	/*Analisar novamente*/
-	for(int i = 1; i < s->sequence.size() - 1; i++){
+	for(int i = 1; i < s->sequence.size() - 3; i++){
 
 		for(int j = i + 2; j < s->sequence.size() - 3; j++) {
 			
 			// Subsequencia nova, após a saída dos valores seguidos, no exemplo anterior seriam 1 4 5 6 7 8
 			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 2][j + 1]);
 			
+
 			// Subsequencia formada pelos nós que serão deslocados pelo OrOpt no caso anterior 2 e 3
 			Subsequence sigma2 = Subsequence::Concatenate(subseq_matrix[i][i], subseq_matrix[i + 1][i + 1]);
-
+		
 			Subsequence sigma3 = Subsequence::Concatenate(sigma1, sigma2); // Concatena sigma1 e sigma2
 			
 			Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 2][n - 1]);
@@ -410,13 +411,21 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 
 		}
 	}
-
+	
 	if(bestDelta != s->cost) {
 		//Devemos levar o primeiro valor de i até o valor de j
 		
-		std::vector < int> valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1]};
+		std::cout << "best_i: " << best_i << std::endl;
+		std::cout << "best_j: " << best_j << std::endl;
 
 		for(int i = 0; i < s->sequence.size(); i++) {
+			
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
+		std::vector < int> valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1]};
+
+		for(int i = 0; i < valoresAdicionar.size(); i++) {
 			s->sequence.erase(s->sequence.begin() + best_i);
 		}
 
@@ -424,6 +433,11 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 			s->sequence.insert(s->sequence.begin() + best_j + i, valoresAdicionar[i]);
 		}
 		
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
 		updateAllSubseq(s, subseq_matrix);
 		std::cout << "fez oorOpt2" << std::endl;
 		getchar();
@@ -434,6 +448,68 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 	return false;
 
 }
+
+
+bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
+	int n = s->sequence.size() - 1;
+	
+	double bestDelta = s->cost;
+	int best_i, best_j;
+	
+	/* Dado a sequencia 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1	*/
+	/* Vamos pegar três vértices consecutivos e mudar a posição	*/
+	/* i = 1 e j = 8
+	 * 1 (2 3 4) 5 6 7 8 9 10 11 12 13 14 1
+	 * 1 5 6 7 8 9 10 11 (2 3 4) 12 13 14 1 
+	 * Logo, tudo de 0 até i - 1 se manteve constante, e de i + 3 até j + 2 também, pega o que se manteve concatenato e termina com o fim
+	 * Que é j + 3 até n - 1.	*/
+
+	for(int i = 1; i < s->sequence.size() - 5; i++) {
+
+		for(int j = i + 3; j < s->sequence.size() - 5; j++) {
+			
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 3][j + 2]);
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[i][i + 2]); // subseq_matrix[i][i + 2] é a sequencia retirada
+
+			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 3][n - 1]);
+
+			if(sigma3.C < bestDelta) {
+				std::cout << "achou melhor delta por oropt3: " << sigma3.C << std::endl;
+				best_i = i;
+				best_j = j;
+
+				bestDelta = sigma3.C;
+
+			}
+		}
+	}
+
+
+	if(bestDelta != s->cost) {
+		
+		std::vector < int > valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1], s->sequence[best_i + 2]};
+
+		for(int i = 0; i < valoresAdicionar.size(); i++) {
+
+			s->sequence.erase(s->sequence.begin() + best_i);
+		}
+
+		for(int i = 0; i < valoresAdicionar.size(); i++) {
+
+			s->sequence.insert(s->sequence.begin() + best_j + i, valoresAdicionar[i]);
+		}
+		
+		updateAllSubseq(s, subseq_matrix);
+
+		std::cout << "utilizou oropt3: " << bestDelta << std::endl;
+
+		getchar();
+
+		return true;
+	}
+	return false;
+}
+
 
 
 void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
@@ -461,6 +537,10 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 				improved = bestImprovementOrOpt2(s, subseq_matrix);
 				break;
 			
+			case 5:
+				improved = bestImprovementOrOpt3(s, subseq_matrix);
+				break;
+		
 		}
 
 		if(improved) {
@@ -472,6 +552,144 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 	}
 }
 
+
+void perturbacao(Solution *s) {
+	/* Gera numero aleatorio entre 2 e a dimensão do grafo */	
+	std::random_device rd;
+	
+	int limite;
+	if(s->sequence.size() > 20) {
+	
+		limite = s->sequence.size() / 10;
+	}
+	else {
+		limite = 2;
+	}
+	std::mt19937 gen(rd());
+	std::uniform_int_distribution<> dist(2, limite);
+	
+	/* Pega inicialmente os tamanhos aleatórios e a posicaoInicial do primeiro	*/
+	int tamanho1 =  dist(gen);
+	int tamanho2 = dist(gen);
+		
+	std::uniform_int_distribution <> dist1(1, s->sequence.size() - 2 - tamanho1); // Podemos pegar qualquer posição
+	std::uniform_int_distribution <> dist2(1, s->sequence.size() - 2 - tamanho2); // Garantimos que vamos pegar uma posição inicial que não estoure o programa
+
+	int posicaoInicial1 = dist1(gen);
+
+	/* Devemos então, garantir que a posicao inicial do 2, comece após a sequencia do primeiro	*/
+	int posicaoInicial2;
+	
+	while(1){
+	
+		posicaoInicial2 = dist2(gen);
+
+		if(posicaoInicial2 != posicaoInicial1 && (posicaoInicial2 > posicaoInicial1 + tamanho1 || posicaoInicial2 < posicaoInicial1 - tamanho2)) {
+			break;
+		}
+	}
+	
+	
+	std::vector < int > sequencia1;
+	std::vector < int > sequencia2;
+	int valor1, valor2;
+	
+	valor1 = s->sequence[posicaoInicial1 - 1];
+	valor2 = s->sequence[posicaoInicial2 - 1];
+	//int contador1 = tamanho1;
+	std::cout << "Posicoes" << std::endl;	
+	std::cout << posicaoInicial1 << std::endl;
+	std::cout << posicaoInicial2 << std::endl;
+
+	std::cout << "Sequencia Inicialmente:" << std::endl;
+	for(int i = 0; i < s->sequence.size(); i++) {
+		std::cout << s->sequence[i] << " ";
+	}	
+	std::cout << std::endl;
+	int contador1 = tamanho1;
+	while(contador1--)
+	{
+
+		sequencia1.push_back(s->sequence[posicaoInicial1]);
+		s->sequence.erase(s->sequence.begin() + posicaoInicial1);
+	}
+	
+	int k = 0;
+	int contador = tamanho2;
+	for(int i = 0; i < s->sequence.size() - 1; i++) 
+	{
+		if(valor2 == s->sequence[i]) {
+			k = i + 1;
+			while(contador--) {
+				sequencia2.push_back(s->sequence[k]);
+				s->sequence.erase(s->sequence.begin() + k);
+			}
+
+			break;
+		} 
+	}
+
+	std::cout << "valor1: " << valor1 << std::endl;
+	std::cout << "valor2: " << valor2 << std::endl;
+
+	std::cout << "Sequencias armazenadas: " << std::endl;
+	for(int i = 0; i < sequencia1.size(); i++) {
+		std::cout << sequencia1[i] << " ";
+	}
+	std::cout << std::endl;
+
+	for(int i = 0; i < sequencia2.size(); i++) {
+		std::cout << sequencia2[i] << " ";
+	}
+	std::cout << std::endl;
+	
+	int j = 0;
+	for(int i = 0; i < s->sequence.size() - 1; i++) {
+
+		if(valor1 == s->sequence[i]) {
+			k = i + 1;
+			while(tamanho2--) {
+
+				s->sequence.insert(s->sequence.begin() + k, sequencia2[j]);
+				k++;
+				j++;
+			}
+			j = 0;
+		}
+
+		if(valor2 == s->sequence[i]) {
+			k = i + 1;
+
+			while(tamanho1--) {
+				s->sequence.insert(s->sequence.begin() + k, sequencia1[j]);
+				k++;
+				j++;
+			}
+			j = 0;
+		}
+	}
+
+	
+	for(int i = 0; i < s->sequence.size(); i++) {
+
+		std::cout << s->sequence[i] << " ";
+	}
+	std::cout << std::endl;
+	int repetidos = 0;
+	int valor;
+	for(int i = 1; i < s->sequence.size() - 1; i++) {
+		for(int j = i + 1; j < s->sequence.size() - 1; j++) {
+			if(s->sequence[i] == s->sequence[j]) {
+				repetidos++;
+				valor = s->sequence[i];
+			}
+		}
+	}
+	std::cout << repetidos << std::endl;
+	std::cout << valor << std::endl;
+
+	
+}
 
 int main(int argc, char** argv) {
 	
@@ -562,10 +780,19 @@ int main(int argc, char** argv) {
 		std::cout << s->sequence[i] << " ";
 	}
 	std::cout << std::endl;
+
+	perturbacao(s);
+	buscaLocal(s, subseq_matrix);
+
+	for(int i = 0; i < s->sequence.size(); i++) {
+		std::cout << s->sequence[i] << " ";
+	}
+	std::cout << std::endl;
+	int n = s->sequence.size() - 1;
+	s->cost = subseq_matrix[0][n - 1].C;
+	std::cout << s->cost << std::endl;
 	for(int i = 0; i < dimensao; i++) {
-
-
-			delete matriz[i];
+		delete matriz[i];
 	}
 	return 0;
 }
