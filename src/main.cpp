@@ -334,7 +334,6 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 			/* Concatena sigma 2 com a subsequencia final	*/
 			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 1][n - 1]);
 
-			//Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 1][n - 1]);
 			if(sigma3.C < bestDelta) {
 				std::cout << "achou melhor delta por OrOpt: " << sigma3.C << std::endl;
 				best_i = i;
@@ -400,7 +399,6 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 
 			Subsequence sigma3 = Subsequence::Concatenate(sigma1, sigma2); // Concatena sigma1 e sigma2
 			
-			std::cout << "quebrou";
 			Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 2][n - 1]);
 
 			if(sigma4.C < bestDelta) {
@@ -415,11 +413,20 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 
 	if(bestDelta != s->cost) {
 		//Devemos levar o primeiro valor de i até o valor de j
-		int posicaoInicial = best_i;
-		int posicaoFinal = best_j; 
+		
+		std::vector < int> valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1]};
 
+		for(int i = 0; i < s->sequence.size(); i++) {
+			s->sequence.erase(s->sequence.begin() + best_i);
+		}
 
-
+		for(int i = 0; i < valoresAdicionar.size(); i++) {
+			s->sequence.insert(s->sequence.begin() + best_j + i, valoresAdicionar[i]);
+		}
+		
+		updateAllSubseq(s, subseq_matrix);
+		std::cout << "fez oorOpt2" << std::endl;
+		getchar();
 	}
 	
 	
@@ -449,7 +456,7 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 			case 3:
 				improved = bestImprovementOrOpt(s, subseq_matrix);
 				break;
-			
+				
 			case 4:
 				improved = bestImprovementOrOpt2(s, subseq_matrix);
 				break;
