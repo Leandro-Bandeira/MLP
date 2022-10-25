@@ -8,6 +8,7 @@
 #include <sstream>
 #include <ios>
 #include <fstream>
+#include <iomanip>
 
 int **t;  
 
@@ -50,7 +51,19 @@ typedef struct {
 
 
 
+void printaSolucao(int best_i, int best_j, Solution *s, std::string nomeMovimento) {
 
+		std::cout << "Cost: " << s->cost << std::endl;
+		
+		std::cout << "best_i: " << best_i << " e best_j: " << best_j << '\n';
+		std::string saidaString = "Solution before " + nomeMovimento;
+		std::cout << saidaString;
+		for(int i = 0; i < s->sequence.size(); i++) {
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << '\n';
+
+}
 
 Solution * Construction(int dimensao, int** matriz) {
 
@@ -128,7 +141,7 @@ Solution * Construction(int dimensao, int** matriz) {
 
 void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subseq_matrix) {
 	
-	int n =  s->sequence.size() - 1; // Numero de nós da instancia, retira 1, pois a solução é 1 2 3 4 5 1, porém ela só tem 5 nós não 6.
+	int n =  s->sequence.size(); // Numero de nós da instancia, retira 1, pois a solução é 1 2 3 4 5 1, porém ela só tem 5 nós não 6.
 	/*Atualiza as subsequencias de um unico nó
 	 * O custo de atraso = 0 se for o primeiro nó, caso não é 1
 	 * O custo = 0
@@ -138,6 +151,7 @@ void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subse
 	/*
 	 * Imagina uma matriz, e as subsequencias de um unico nó formam a diagonal principal
 	 * Lembrando que, subseq_matrix[i][j] contém as informações da subsequencia que vai de i ate j*/
+	// Se a minha instancia tem dimensão 14, temos 15 pontos contando com 1 no final, logo a matriz é 15 x 15, seus indices vão de 0 a 14.
 	for(int i = 0; i < n; i++) {
 		
 		int v = s->sequence[i] - 1; // Vamos retirar 1, porque para acessar a matriz que vai de 0 até 13, a sequencia vai de 1 ate 14, dado n = 14
@@ -146,11 +160,10 @@ void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subse
 		subseq_matrix[i][i].T = 0;
 		subseq_matrix[i][i].first = v; 
 		subseq_matrix[i][i].last = v;
-	
+
 		
 	}
-	
-	/*
+	/*	
 	 * Se temos a solução s = 1, 2, 5, 7, 8, 9, 1
 	 * i = 0 e j = 1 ( subsequencia que vai de 0 ate 1 )
 	 * Temos a subsequencia que vai de 1 ate 2 em s, ela é formada pela concatenação da subsequencia de 0 ate 0  + 1 até 1
@@ -179,10 +192,13 @@ void updateAllSubseq(Solution *s, std::vector<std::vector< Subsequence >> &subse
 		}
 
 	}
-	
+		
+	std::cout << std::setfill ('-') << std::setw(169) << '\n';
 	std::cout << "Atualizou as subsequencias\n";
 	s->cost = subseq_matrix[0][n - 1].C;
-	std::cout << "custo inicial: " << s->cost << std::endl;
+	std::cout << "Custo inicial: " << s->cost << std::endl;
+	std::cout << std::setfill ('-') << std::setw(169) << '\n';
+			
 }
 
 
@@ -200,7 +216,7 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	 * 5 6 não se alteram
 	 * Apenas de 3 -> 7 e 6 -> 4	*/
 
-	int n =  s->sequence.size() - 1;
+	int n =  s->sequence.size();
 
 	/*
 	 * Perceba que dividimos em uma subsequencia que vai do nó inicial até o nó anterior ao da troca concatenado com o nó da troca.
@@ -219,37 +235,53 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	Subsequence sigma  = Subsequence::Concatenate(sigma1, sigmaCentral);
 	
 	/* Concatena toda a inicial com a final que se manteve constante	*/
-	Subsequence sigma2 = Subsequence::Concatenate(sigma, subseq_matrix[j + 1][n - 1]);
+	/* Verificamos se a posição de troca é o ultimo vértice, para não enviar j + 1	*/
+	Subsequence sigma2;
+	sigma2 = Subsequence::Concatenate(sigma, subseq_matrix[j + 1][n - 1]);
+	
 	return sigma2.C; // retorna o custo
 }
 bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
 	double bestDelta = s->cost;
 	int best_i, best_j;
-	
+
+	/* Se temos, 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1, s->sequence.size() retorna 15, logo no for irá iterar de 0 a 14, quebrando, logo devemos iterar de 
+	 * 0 a 13, por isso temos n = s->sequence.size() - 1 = 14, pois nossas matrizes e vertices são do tipo dimensao - 1 x dimensao -1	*/
+
+	int n = s->sequence.size() - 1; // Como o tamanho da sequencia é sempre mais 1, por conta do 1 no final damos -1 para fazer o for com o tamanho real
+	// -> devemos lembrar que s->sequence sempre vale mais 1, por conta do 1 final	
 	/* Pegamos a partir do primeiro indice e não pegamos o ultimo pois a sequencia é da seguinte forma 1 2 3 4 5 1	*/
 	/* Ponto 1 do inicio e final sao fixos	*/
 	/* 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1	*/
 	/* Colocamos até j < s->sequencia.size() - 2, pois damos j + 1, ou seja se j = 13, se dermos +1 ocorre falha de memoria	*/
-	for(int i = 1; i < s->sequence.size() - 1; i++) {
-		
-		for(int j = i + 1; j  < s->sequence.size() - 2; j++) {
+	/* A troca com o ultimo nó é diferente, 1 (14) 3 4 5 6 7 8 9 10 11 12 13 (2) 1	*/
+	for(int i = 1; i < n - 1; i++) {
+			
+		for(int j = i + 1; j  <n; j++) {
 
 			double delta = calculateSwapCost(s, i, j, subseq_matrix);
 			if(delta < bestDelta) {
-				std::cout << "achou troca melhor: " << delta;
 				bestDelta = delta;
 				best_i = i;
 				best_j = j;
-				getchar();
 			}
 		}
 	}
 	if(bestDelta != s->cost) {
-		std::cout << "fez swap\n";	
+			
+		printaSolucao(best_i, best_j, s, "Swap: ");
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
-		s->cost = bestDelta;
 		updateAllSubseq(s, subseq_matrix);
-		std::getchar();
+
+		std::cout << "Solution after swap: ";
+
+		for(int i = 0; i < s->sequence.size(); i++) {
+			
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << '\n';
+			
+		std::cout << std::setfill ('-') << std::setw(169) << '\n';
 		return true;
 	}
 
@@ -262,9 +294,9 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 	double bestDelta = s->cost;
 	int best_i, best_j;
 
-	for(int i = 1; i < s->sequence.size() - 1; i++) {
-
-		for(int j =  i + 2; j < s->sequence.size() -2; j++) {
+	for(int i = 1; i < n - 1; i++) {
+		
+		for(int j =  i + 2; j < n; j++) {
 			
 			/* O movimento 2opt, vamos pegar duas arestas não adjacentes e inserir o caminho entre elas de forma invertida	*/
 			/* Dado o seguimento A B E D C F G H A	e os indices de troca 1 e 4	*/
@@ -275,18 +307,18 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][n - 1]);
 
 			if(sigma2.C < bestDelta) {
-				std::cout << "valor troca 2opt: " << sigma2.C << std::endl;
 				bestDelta = sigma2.C;
 				best_i = i;
 				best_j = j;
-				getchar();
-				std::cout << "ocorreu melhor trocar 2opt" << std::endl;
 			}
 		}
 	}
 
 	if(bestDelta != s->cost) {
 		
+		s->cost = bestDelta; // Atualiza o custo
+		
+		printaSolucao(best_i, best_j, s, "2 Opt: ");	
 		int posicaoInicial = best_i + 1;
 		int posicaoFinal = best_j;
 
@@ -298,6 +330,17 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 		}
 		
 		updateAllSubseq(s, subseq_matrix);
+
+		std::cout << "Solution after 2-Opt: ";
+
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << '\n';
+
+		std::cout << std::setfill ('-') << std::setw(169) << '\n';
+		getchar();	
 		return true;
 	}
 
@@ -307,7 +350,7 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 
 bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
 	
-	int n = s->sequence.size() - 1;
+	int n = s->sequence.size();
 	double bestDelta = s->cost;
 	int best_i, best_j;
 	
@@ -320,9 +363,11 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 	 * Vamos criar uma nova subsequencia com i - 1 até i + 1 e concatenar com i + 1 até j
 	 * Assim como vamos criar uma de i até j + 1 e concatenar com o fim	*/
 	
-	for(int i = 1; i < s->sequence.size() - 1; i++) {
+	/* i = 3 e j = 10
+	 * 1 2 3 5 6 7 8 9 10 (4) 1	*/
+	for(int i = 1; i < n - 1; i++) {
 
-		for(int j = i + 1; j < s->sequence.size() - 2; j++) {
+		for(int j = i + 1; j < n; j++) {
 			
 			/* Segue a mesma logica que o swap*/
 			/* Utilizamos a concatenação com i + 1 até o valor de j, que se perceber foi o que manteve fixo	*/
@@ -331,11 +376,16 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 			/* Concatena sigma1 com o valor da subsequencia de um único nó de i	*/
 			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[i][i]);
 			
+			Subsequence sigma3;
 			/* Concatena sigma 2 com a subsequencia final	*/
-			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 1][n - 1]);
+			if(j ==  n - 1) {
+				sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[0][0]);
+			}
+			else {
+				sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 1][n - 1]);
+			}
 
 			if(sigma3.C < bestDelta) {
-				std::cout << "achou melhor delta por OrOpt: " << sigma3.C << std::endl;
 				best_i = i;
 				best_j = j;
 				bestDelta = sigma3.C;
@@ -347,6 +397,9 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 	
 	if(bestDelta != s->cost) {
 		
+		s->cost = bestDelta; // Atualiza o custo
+
+		printaSolucao(best_i, best_j, s, "Or-Opt: ");
 		int posicaoInicial = best_i;
 		int posicaoFinal = best_j;
 
@@ -355,9 +408,18 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 			std::swap(s->sequence[best_i], s->sequence[best_i + 1]);
 			best_i++;
 		}
+		
+		std::cout << "Solution after Or-Opt: ";
+		for(int i = 0; i < s->sequence.size(); i++) {
 
+			std::cout << s->sequence[i] << " ";
+		}
+		
+		std::cout << '\n';
 		updateAllSubseq(s, subseq_matrix);
-
+		
+		std::cout << std::setfill ('-') << std::setw(169) << '\n';
+		getchar();	
 		return true;
 	}
 
@@ -371,7 +433,7 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 
 bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
 
-	int n = s->sequence.size() - 1;
+	int n = s->sequence.size();
 	double bestDelta = s->cost;
 	
 	int best_i, best_j;
@@ -403,7 +465,6 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 			Subsequence sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 2][n - 1]);
 
 			if(sigma4.C < bestDelta) {
-				std::cout << "achou melhor delta por OrOpt2: " << sigma4.C << std::endl;
 				bestDelta = sigma4.C;
 				best_i = i;
 				best_j = j;
@@ -415,14 +476,8 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 	if(bestDelta != s->cost) {
 		//Devemos levar o primeiro valor de i até o valor de j
 		
-		std::cout << "best_i: " << best_i << std::endl;
-		std::cout << "best_j: " << best_j << std::endl;
-
-		for(int i = 0; i < s->sequence.size(); i++) {
-			
-			std::cout << s->sequence[i] << " ";
-		}
-		std::cout << std::endl;
+		s->cost = bestDelta;
+		printaSolucao(best_i, best_j, s, "Or-Opt2: ");
 		std::vector < int> valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1]};
 
 		for(int i = 0; i < valoresAdicionar.size(); i++) {
@@ -433,14 +488,18 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 			s->sequence.insert(s->sequence.begin() + best_j + i, valoresAdicionar[i]);
 		}
 		
+		std::cout << "Solution after Or-Opt2: ";
 		for(int i = 0; i < s->sequence.size(); i++) {
 
 			std::cout << s->sequence[i] << " ";
 		}
 		std::cout << std::endl;
 		updateAllSubseq(s, subseq_matrix);
-		std::cout << "fez oorOpt2" << std::endl;
-		getchar();
+
+	
+		std::cout << std::setfill ('-') << std::setw(169) << '\n';
+		getchar();	
+		return true;
 	}
 	
 	
@@ -451,7 +510,7 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 
 
 bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence > > &subseq_matrix) {
-	int n = s->sequence.size() - 1;
+	int n = s->sequence.size();
 	
 	double bestDelta = s->cost;
 	int best_i, best_j;
@@ -474,7 +533,6 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 3][n - 1]);
 
 			if(sigma3.C < bestDelta) {
-				std::cout << "achou melhor delta por oropt3: " << sigma3.C << std::endl;
 				best_i = i;
 				best_j = j;
 
@@ -487,6 +545,9 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 
 	if(bestDelta != s->cost) {
 		
+		s->cost = bestDelta;
+
+		printaSolucao(best_i, best_j, s, "Or-Opt3: ");
 		std::vector < int > valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1], s->sequence[best_i + 2]};
 
 		for(int i = 0; i < valoresAdicionar.size(); i++) {
@@ -501,10 +562,16 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 		
 		updateAllSubseq(s, subseq_matrix);
 
-		std::cout << "utilizou oropt3: " << bestDelta << std::endl;
+		std::cout << "Solution after Or-opt3: ";
 
-		getchar();
+		for(int i = 0; i < s->sequence.size(); i++) {
 
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << '\n';
+		
+		std::cout << std::setfill ('-') << std::setw(169) << '\n';
+		getchar();	
 		return true;
 	}
 	return false;
@@ -759,6 +826,7 @@ int main(int argc, char** argv) {
 	/*-------------------------------------------------*/
 	Solution* s = Construction(dimensao, matriz);
 	
+	std::cout << std::setfill('-') << std::setw(169) << '\n';
 	
 	std::cout << "sequencia apos construcao" << std::endl;
 	for(int i = 0; i < s->sequence.size(); i++) {
@@ -766,12 +834,14 @@ int main(int argc, char** argv) {
 		std::cout << s->sequence[i] << " ";
 	}
 	std::cout << std::endl;
+	std::cout << std::setfill('-') << std::setw(169) << '\n';
 
 	/* Matriz com todas as subsequencia
 	 * a subseq_matrix[i][j] armazena informações da subsequencia que inicia em i e termina em j relativo a solução s	*/
 	
-	
-	std::vector < std::vector < Subsequence > > subseq_matrix(dimensao, std::vector < Subsequence >(dimensao));	
+	// Somamos mais 1 para incluir o 1 final
+	// Dado uma instancia de dimensão 14, temos 14 pontos, mas em teoria temos 15 pontos por conta do ciclo hamiltoniano 1 --- 1
+	std::vector < std::vector < Subsequence > > subseq_matrix(dimensao + 1, std::vector < Subsequence >(dimensao + 1));	
 	updateAllSubseq(s, subseq_matrix);
 	
 	buscaLocal(s, subseq_matrix);
@@ -782,6 +852,7 @@ int main(int argc, char** argv) {
 	std::cout << std::endl;
 
 	perturbacao(s);
+	updateAllSubseq(s, subseq_matrix);
 	buscaLocal(s, subseq_matrix);
 
 	for(int i = 0; i < s->sequence.size(); i++) {
