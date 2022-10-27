@@ -215,7 +215,9 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	 * 8 9 não se alteram
 	 * 5 6 não se alteram
 	 * Apenas de 3 -> 7 e 6 -> 4	*/
-
+	
+	/* 1 2 3 4 5 6 7 8 9 10 1, i = 3 e j = 7
+	 * 1 2 3 (8) 5 6 7 (4) 9 10 1 */
 	int n =  s->sequence.size();
 
 	/*
@@ -232,14 +234,14 @@ double calculateSwapCost(Solution* s, int i, int j, std::vector < std::vector < 
 	Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[i + 1][j - 1], subseq_matrix[i][i]);
 	
 	/* Concatena as duas anteriores	*/
-	Subsequence sigma  = Subsequence::Concatenate(sigma1, sigmaCentral);
+	Subsequence sigma2  = Subsequence::Concatenate(sigma1, sigmaCentral);
 	
 	/* Concatena toda a inicial com a final que se manteve constante	*/
 	/* Verificamos se a posição de troca é o ultimo vértice, para não enviar j + 1	*/
-	Subsequence sigma2;
-	sigma2 = Subsequence::Concatenate(sigma, subseq_matrix[j + 1][n - 1]);
+	Subsequence sigma3;
+	sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 1][n - 1]);
 	
-	return sigma2.C; // retorna o custo
+	return sigma3.C; // retorna o custo
 }
 bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > >& subseq_matrix) {
 	double bestDelta = s->cost;
@@ -268,7 +270,8 @@ bool bestImprovementSwap(Solution* s, std::vector < std::vector < Subsequence > 
 		}
 	}
 	if(bestDelta != s->cost) {
-			
+		
+		s->cost = bestDelta;
 		printaSolucao(best_i, best_j, s, "Swap: ");
 		std::swap(s->sequence[best_i], s->sequence[best_j]);
 		updateAllSubseq(s, subseq_matrix);
@@ -565,6 +568,7 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 	 * 1 2 3 4 5 6 7 8 9 10 (11 12 13) 14 1
 	 * 1 2 3 4 5 6 7 8 9 10 14 (11 12 13) 1*/
 	
+	//Or opt, fo modificada, verificar depois se ta certo
 	for(int i = 1; i < s->sequence.size() - 4; i++) {
 
 		for(int j = i + 3; j < s->sequence.size() - 1; j++) {
