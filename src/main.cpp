@@ -543,15 +543,36 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 	 * Logo, tudo de 0 até i - 1 se manteve constante, e de i + 3 até j + 2 também, pega o que se manteve concatenato e termina com o fim
 	 * Que é j + 3 até n - 1.	*/
 	
-	/* Analisando para último caso	*/
-	for(int i = 1; i < s->sequence.size() - 5; i++) {
+	/* Analisando para último caso	
+	 * Dado a sequencia anterior, j = 13 e i = 1
+	 * 1 5 6 7 8 9 10 11 12 13 14 (2 3 4) 1
+	 * i = 10 logo, j = 13
+	 * 1 2 3 4 5 6 7 8 9 10 (11 12 13) 14 1
+	 * 1 2 3 4 5 6 7 8 9 10 14 (11 12 13) 1
+	 *
+	 * i = 9, logo j = 12
+	 * 1 2 3 4 5 6 7 8 9 (10 11 12) 13 14 1
+	 * 1 2 3 4 5 6 7 8 9 13 (10 11 12)14 1
+	 *
+	 * i = 1 e j = 8
+	 * 1 (2 3 4) 5 6 7 8 9 10 11 12 13 14 1
+	 * 1 5 6 7 8 9 (2 3 4) 10 11 12 13 14 1
+	 * Vamos posicionar anterior ao número posicionado em j
+	 * então 0 até i - 1 se mantém fixo, i + 2 até j - 1
+	 * No ultimo nó, temos i = 1 e j = 13
+	 * 1 5 6 7 8 9 10 11 12 13 14 (2 3 4) 1
+	 * O ultimo caso, é i = 10 e j = 13
+	 * 1 2 3 4 5 6 7 8 9 10 (11 12 13) 14 1
+	 * 1 2 3 4 5 6 7 8 9 10 14 (11 12 13) 1*/
+	
+	for(int i = 1; i < s->sequence.size() - 4; i++) {
 
-		for(int j = i + 3; j < s->sequence.size() - 5; j++) {
+		for(int j = i + 3; j < s->sequence.size() - 1; j++) {
 			
-			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 3][j + 2]);
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 3][j]);
 			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[i][i + 2]); // subseq_matrix[i][i + 2] é a sequencia retirada
-
-			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 3][n - 1]);
+			
+			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[j + 1][n - 1]);
 
 			if(sigma3.C < bestDelta) {
 				best_i = i;
@@ -570,17 +591,24 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 
 		printaSolucao(best_i, best_j, s, "Or-Opt3: ");
 		std::vector < int > valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1], s->sequence[best_i + 2]};
-
+		int valorReferencia = s->sequence[best_j];
 		for(int i = 0; i < valoresAdicionar.size(); i++) {
 
 			s->sequence.erase(s->sequence.begin() + best_i);
 		}
-
-		for(int i = 0; i < valoresAdicionar.size(); i++) {
-
-			s->sequence.insert(s->sequence.begin() + best_j + i, valoresAdicionar[i]);
-		}
 		
+
+		for(int i = 0; i < s->sequence.size(); i++) {
+	
+			if(s->sequence[i] == valorReferencia) {
+				
+				for(int j = 0; j < valoresAdicionar.size(); j++) {
+					s->sequence.insert(s->sequence.begin() + i + j + 1, valoresAdicionar[j]);
+				}
+				break;
+			}
+		}
+
 		updateAllSubseq(s, subseq_matrix);
 
 		std::cout << "Solution after Or-opt3: ";

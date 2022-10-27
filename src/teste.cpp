@@ -12,6 +12,7 @@ int main() {
 	int best_i = 1;
 	int best_j = 5;
 	
+	int valoresReferencia = valores[best_j];
 	for(int i = 0; i < valores.size(); i++) {
 
 		std::cout << valores[i] << " ";
