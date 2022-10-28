@@ -307,7 +307,7 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 			/* Perceba que tudo de 0 até i, se manteve constante, como de j + 1 até n - 1, so mudou de i + 1 até J, que foi colocado de maneira invertida	*/
 
 			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[j][i]); // subseq_matrix[j][i] já representa a subsequencia invertida de j até i
-			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][n - 1]);
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j + 1][n - 1]);
 
 			if(sigma2.C < bestDelta) {
 				bestDelta = sigma2.C;
@@ -322,7 +322,7 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 		s->cost = bestDelta; // Atualiza o custo
 		
 		printaSolucao(best_i, best_j, s, "2 Opt: ");	
-		int posicaoInicial = best_i + 1;
+		int posicaoInicial = best_i;
 		int posicaoFinal = best_j;
 
 		while(posicaoFinal > posicaoInicial) {
@@ -343,7 +343,6 @@ bool bestImprovement2opt(Solution* s, std::vector < std::vector < Subsequence >>
 		std::cout << '\n';
 
 		std::cout << std::setfill ('-') << std::setw(169) << '\n';
-		getchar();	
 		return true;
 	}
 
@@ -392,7 +391,35 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 
 	}
 	
-	if(bestDelta != s->cost) {
+	bool caso2 = false;
+	/* Vamos executar o movimento Or-opt de trás pra frente
+	 * 1 2 3 4 5 6 7 8 9 10 1
+	 * i = 13 e j = 1
+	 * 1 10 2 3 4 5 6 7 8 9 1	
+	 * i = 13 e j = 2
+	 * 1 2 10 3 4 5 6 7 8 9 1
+	 * 1 2 3 4 5 6 7 8 9 10 (11) 12 13 14 1
+	 * i = 10 e j = 6
+	 * 1 2 3 4 5 6 11 7 8 9 10 12 13 14 1	*/
+	for(int i =  n - 2; i > 1; i-- ){
+
+		for(int j = 1; j < i; j++) {
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][j - 1], subseq_matrix[i][i]);
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][n - 1]);
+
+			if(sigma2.C < bestDelta) {
+				
+				bestDelta = sigma2.C;
+				best_i = i;
+				best_j = j;
+				caso2 = true;
+
+			}
+
+		}
+	}
+	
+	if(bestDelta != s->cost and !caso2) {
 		
 		s->cost = bestDelta; // Atualiza o custo
 
@@ -416,10 +443,35 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 		updateAllSubseq(s, subseq_matrix);
 		
 		std::cout << std::setfill ('-') << std::setw(169) << '\n';
-		getchar();	
+			
 		return true;
 	}
+	
+	if(caso2 == true){
 
+		
+		s->cost = bestDelta;
+		printaSolucao(best_i, best_j, s, "Or-Opt: ");
+
+		int valorReferencia = s->sequence[best_j];
+		int valorAdicionar = s->sequence[best_i];
+
+		s->sequence.erase(s->sequence.begin() + best_i);
+
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			if(s->sequence[i] == valorReferencia) {
+				s->sequence.insert(s->sequence.begin() + i, valorAdicionar);
+				break;
+			}
+		}
+
+		getchar();
+
+		updateAllSubseq(s, subseq_matrix);
+
+		return true;
+	}
 
 
 
@@ -456,21 +508,20 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 	 *
 	 * Testar para i = 10, j = 12
 	 * 1 2 3 4 5 6 7 8 9 10 (11 12) 13 14 1
-	 * 1 2 3 4 5 6 7 8 9 10 13 14 (11 12) 1	
-	 * A Lógica anterior funciona até j = 12, mas j  = 13 deve ser mudado.*/
+	 * 1 2 3 4 (5 6) 7 8 9 (10) 13 14 (11 12) 1	
+	 * A Lógica anterior funciona até j = 12, mas j  = 13 deve ser mudado.
+	 * Pegando o exemplo anterior, 1 2 3 4 (5 6) 7 8  9 (10) 11 12 13 14 1
+	 * i = 4 j = 9
+	 *  1 2 3 4 7 8 9 10 (5 6) 11 12 13 14 1
+	 *  i = 4 e j = 13
+	 *  1 2 3 4 7 8 9 10 11 12 13 14 (5 6) 1*/
 	for(int i = 1; i < s->sequence.size() - 3; i++){
 
 		for(int j = i + 2; j < s->sequence.size() - 1; j++) {
 			
 			// Subsequencia nova, após a saída dos valores seguidos, no exemplo anterior seriam 1 4 5 6 7 8
 			
-			Subsequence sigma1;
-			if(j == s->sequence.size() - 2) {
-				sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 2][j]);
-			}
-			else {
-				sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 2][j + 1]);
-			}
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][i - 1], subseq_matrix[i + 2][j]);
 			
 
 			// Subsequencia formada pelos nós que serão deslocados pelo OrOpt no caso anterior 2 e 3
@@ -479,12 +530,7 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 			Subsequence sigma3 = Subsequence::Concatenate(sigma1, sigma2); // Concatena sigma1 e sigma2
 			Subsequence sigma4;
 			//Concatena com o ultimo nó que é o que falta
-			if(j == s->sequence.size() - 2) {
-				sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[n - 1][n - 1]);
-			}
-			else {
-				sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 2][n - 1]);
-			}
+			sigma4 = Subsequence::Concatenate(sigma3, subseq_matrix[j + 1][n - 1]);
 
 
 			if(sigma4.C < bestDelta) {
@@ -503,12 +549,22 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 		printaSolucao(best_i, best_j, s, "Or-Opt2: ");
 		std::vector < int> valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1]};
 
+		int valorReferencia = s->sequence[best_j];
 		for(int i = 0; i < valoresAdicionar.size(); i++) {
 			s->sequence.erase(s->sequence.begin() + best_i);
 		}
+		
 
-		for(int i = 0; i < valoresAdicionar.size(); i++) {
-			s->sequence.insert(s->sequence.begin() + best_j + i, valoresAdicionar[i]);
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			if(s->sequence[i] == valorReferencia) { 
+				
+				for(int j = 0; j < valoresAdicionar.size(); j++) {
+
+					s->sequence.insert(s->sequence.begin() + i + j + 1, valoresAdicionar[j]);
+				}
+				break;
+			}
 		}
 		
 		std::cout << "Solution after Or-Opt2: ";
@@ -521,7 +577,7 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 
 	
 		std::cout << std::setfill ('-') << std::setw(169) << '\n';
-		getchar();	
+			
 		return true;
 	}
 	
@@ -624,7 +680,7 @@ bool bestImprovementOrOpt3(Solution* s, std::vector < std::vector < Subsequence 
 		std::cout << '\n';
 		
 		std::cout << std::setfill ('-') << std::setw(169) << '\n';
-		getchar();	
+	
 		return true;
 	}
 	return false;
@@ -674,7 +730,7 @@ void buscaLocal(Solution* s, std::vector < std::vector < Subsequence > > &subseq
 
 
 void perturbacao(Solution *s) {
-	/* Gera numero aleatorio entre 2 e a dimensão do grafo */	
+	// Gera numero aleatorio entre 2 e a dimensão do grafo 	
 	std::random_device rd;
 	
 	int limite;
@@ -685,10 +741,11 @@ void perturbacao(Solution *s) {
 	else {
 		limite = 2;
 	}
+
 	std::mt19937 gen(rd());
 	std::uniform_int_distribution<> dist(2, limite);
 	
-	/* Pega inicialmente os tamanhos aleatórios e a posicaoInicial do primeiro	*/
+	/* Pega inicialmente os tamanhos aleatórios e a posicaoInicial do primeiro */	
 	int tamanho1 =  dist(gen);
 	int tamanho2 = dist(gen);
 		
@@ -716,16 +773,6 @@ void perturbacao(Solution *s) {
 	
 	valor1 = s->sequence[posicaoInicial1 - 1];
 	valor2 = s->sequence[posicaoInicial2 - 1];
-	//int contador1 = tamanho1;
-	std::cout << "Posicoes" << std::endl;	
-	std::cout << posicaoInicial1 << std::endl;
-	std::cout << posicaoInicial2 << std::endl;
-
-	std::cout << "Sequencia Inicialmente:" << std::endl;
-	for(int i = 0; i < s->sequence.size(); i++) {
-		std::cout << s->sequence[i] << " ";
-	}	
-	std::cout << std::endl;
 	int contador1 = tamanho1;
 	while(contador1--)
 	{
@@ -749,20 +796,7 @@ void perturbacao(Solution *s) {
 		} 
 	}
 
-	std::cout << "valor1: " << valor1 << std::endl;
-	std::cout << "valor2: " << valor2 << std::endl;
 
-	std::cout << "Sequencias armazenadas: " << std::endl;
-	for(int i = 0; i < sequencia1.size(); i++) {
-		std::cout << sequencia1[i] << " ";
-	}
-	std::cout << std::endl;
-
-	for(int i = 0; i < sequencia2.size(); i++) {
-		std::cout << sequencia2[i] << " ";
-	}
-	std::cout << std::endl;
-	
 	int j = 0;
 	for(int i = 0; i < s->sequence.size() - 1; i++) {
 
@@ -790,30 +824,18 @@ void perturbacao(Solution *s) {
 	}
 
 	
+	std::cout << "Solution after Perturbation: ";
 	for(int i = 0; i < s->sequence.size(); i++) {
 
 		std::cout << s->sequence[i] << " ";
 	}
 	std::cout << std::endl;
-	int repetidos = 0;
-	int valor;
-	for(int i = 1; i < s->sequence.size() - 1; i++) {
-		for(int j = i + 1; j < s->sequence.size() - 1; j++) {
-			if(s->sequence[i] == s->sequence[j]) {
-				repetidos++;
-				valor = s->sequence[i];
-			}
-		}
-	}
-	std::cout << repetidos << std::endl;
-	std::cout << valor << std::endl;
-
 	
 }
 
 int main(int argc, char** argv) {
 	
-
+	int custoEntrada = std::atoi(argv[2]);
 	/*	Organiza a entrada de dados para pegar a dimensao	*/
 	std::string dimensaoDados;
 	std::fstream arquivo;
@@ -898,24 +920,37 @@ int main(int argc, char** argv) {
 	updateAllSubseq(s, subseq_matrix);
 	
 	buscaLocal(s, subseq_matrix);
-	getchar();	
 	for(int i = 0; i < s->sequence.size(); i++) {
 		std::cout << s->sequence[i] << " ";
 	}
 	std::cout << std::endl;
 	
-	/*
+	
 	perturbacao(s);
 	updateAllSubseq(s, subseq_matrix);
 	buscaLocal(s, subseq_matrix);
-	*/
 	for(int i = 0; i < s->sequence.size(); i++) {
 		std::cout << s->sequence[i] << " ";
 	}
 	std::cout << std::endl;
-	int n = s->sequence.size() - 1;
+	int n = s->sequence.size();
 	s->cost = subseq_matrix[0][n - 1].C;
-	std::cout << s->cost << std::endl;
+	std::cout << "Cost: " << s->cost << std::endl;
+	std::cout << "gap: " << (s->cost - custoEntrada) / custoEntrada << std::endl;
+	
+	int repetidos = 0;
+	for(int i = 1; i < s->sequence.size() - 1; i++) {
+
+		int valor = s->sequence[i];
+
+		for(int  j = i + 1; j < s->sequence.size(); j++) {
+
+			if(valor == s->sequence[j]) {
+				repetidos++;
+			}
+		}
+	}
+	std::cout << "repetidos: " << repetidos << std::endl;
 	for(int i = 0; i < dimensao; i++) {
 		delete matriz[i];
 	}
