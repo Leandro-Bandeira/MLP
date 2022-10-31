@@ -934,7 +934,7 @@ int main(int argc, char** argv) {
 	}
 	std::cout << std::endl;
 	int n = s->sequence.size();
-	s->cost = subseq_matrix[0][n - 1].C;
+	s->cost = subseq_matrix[1][n - 2].C;
 	std::cout << "Cost: " << s->cost << std::endl;
 	std::cout << "gap: " << (s->cost - custoEntrada) / custoEntrada << std::endl;
 	
