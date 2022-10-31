@@ -405,11 +405,12 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 
 		for(int j = 1; j < i; j++) {
 			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][j - 1], subseq_matrix[i][i]);
-			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][n - 1]);
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][i - 1]);
+			Subsequence sigma3 = Subsequence::Concatenate(sigma2, subseq_matrix[i + 1][n - 1]);
 
-			if(sigma2.C < bestDelta) {
+			if(sigma3.C < bestDelta) {
 				
-				bestDelta = sigma2.C;
+				bestDelta = sigma3.C;
 				best_i = i;
 				best_j = j;
 				caso2 = true;
@@ -449,7 +450,8 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 	
 	if(caso2 == true){
 
-		
+		std::cout << "entrou no caso 2" << std::endl;
+
 		s->cost = bestDelta;
 		printaSolucao(best_i, best_j, s, "Or-Opt: ");
 
@@ -466,10 +468,18 @@ bool bestImprovementOrOpt(Solution *s, std::vector < std::vector < Subsequence >
 			}
 		}
 
-		getchar();
 
 		updateAllSubseq(s, subseq_matrix);
+		
+		getchar();
+		std::cout << "Solution after OrOpt: ";
 
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
+		getchar();
 		return true;
 	}
 
@@ -542,7 +552,44 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 		}
 	}
 	
-	if(bestDelta != s->cost) {
+	bool caso2 = false;
+
+	/* 1 2 3 4 5 6 7 8 9 10 11 12 13 14 1
+	 * i = 13,e j = 4
+	 * logo, temos 
+	 * 1 2 3 4 (5) 6 7 8 9 10 11 12 (13 14) 1
+	 * 1 2 3 4 (13 14) (5) 6 7 8 9 10 11 12 1,
+	 * então temos que 0 até j - 1 se mantém, concatena com o conjunto e a posição de j, finaliza com j + 1 até  i - 2 e finaliza com n -1	
+	 * Começa com i = s->sequence.size() - 3, pois pegamos a posição de i mais o valor do seu lado direito
+	 * i = 12 e j = 11
+	 * 1 2 3 4 5 6 7 8 9 10 11 12 (13 14) 1
+	 * 1 2 3 4 5 6 7 8 9 10 11 (13 14) 12 1
+	 */
+	for(int i = s->sequence.size() - 3; i > 1; i--) {
+		
+		for(int j = 1; j < i; j++) {
+			
+			Subsequence sigmaCentral = Subsequence::Concatenate(subseq_matrix[i][i], subseq_matrix[i + 1][i + 1]);
+
+			Subsequence sigma1 = Subsequence::Concatenate(subseq_matrix[0][j - 1], sigmaCentral);
+
+			Subsequence sigma2 = Subsequence::Concatenate(sigma1, subseq_matrix[j][i - 1]);
+
+			Subsequence sigma3 = Subsequence:: Concatenate(sigma2, subseq_matrix[i + 2][n - 1]);
+
+			if(sigma3.C < bestDelta) {
+
+				bestDelta = sigma3.C;
+				best_i = i;
+				best_j = j;
+				caso2 = true;
+			}
+		}
+
+	}
+
+
+	if(bestDelta != s->cost and !caso2) {
 		//Devemos levar o primeiro valor de i até o valor de j
 		
 		s->cost = bestDelta;
@@ -581,7 +628,44 @@ bool bestImprovementOrOpt2(Solution* s, std::vector < std::vector < Subsequence 
 		return true;
 	}
 	
+	if(caso2 ) {
+		std::cout << "caso 2 OrOpt2" << std::endl;
+		s->cost = bestDelta;
+		printaSolucao(best_i, best_j, s, "Or-Opt2: ");
+		std::vector < int> valoresAdicionar = {s->sequence[best_i], s->sequence[best_i + 1]};
+
+		int valorReferencia = s->sequence[best_j];
+		for(int i = 0; i < valoresAdicionar.size(); i++) {
+			s->sequence.erase(s->sequence.begin() + best_i);
+		}
+		
+
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			if(s->sequence[i] == valorReferencia) { 
+				
+				for(int j = 0; j < valoresAdicionar.size(); j++) {
+
+					s->sequence.insert(s->sequence.begin() + i + j, valoresAdicionar[j]);
+				}
+				break;
+			}
+		}
+		
+		std::cout << "Solution after Or-Opt2: ";
+		for(int i = 0; i < s->sequence.size(); i++) {
+
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
+		getchar();
+		updateAllSubseq(s, subseq_matrix);
+
 	
+		std::cout << std::setfill ('-') << std::setw(169) << '\n';
+		getchar();	
+		return true;
+	}
 
 	return false;
 
@@ -897,60 +981,70 @@ int main(int argc, char** argv) {
 		}
 	}
 	t = matriz; // atualiza o vetor de custos que será utilizado na concatenação
-	
-	/*-------------------------------------------------*/
-	Solution* s = Construction(dimensao, matriz);
-	
-	std::cout << std::setfill('-') << std::setw(169) << '\n';
-	
-	std::cout << "sequencia apos construcao" << std::endl;
-	for(int i = 0; i < s->sequence.size(); i++) {
+	double sum = 0;
+	//for(int i = 0; i < 10; i++) {
 
-		std::cout << s->sequence[i] << " ";
-	}
-	std::cout << std::endl;
-	std::cout << std::setfill('-') << std::setw(169) << '\n';
+	
+		/*-------------------------------------------------*/
+		Solution* s = Construction(dimensao, matriz);
+	
+		std::cout << std::setfill('-') << std::setw(169) << '\n';
+	
+		std::cout << "sequencia apos construcao" << std::endl;
+		for(int i = 0; i < s->sequence.size(); i++) {
 
-	/* Matriz com todas as subsequencia
-	 * a subseq_matrix[i][j] armazena informações da subsequencia que inicia em i e termina em j relativo a solução s	*/
-	
-	// Somamos mais 1 para incluir o 1 final
-	// Dado uma instancia de dimensão 14, temos 14 pontos, mas em teoria temos 15 pontos por conta do ciclo hamiltoniano 1 --- 1
-	std::vector < std::vector < Subsequence > > subseq_matrix(dimensao + 1, std::vector < Subsequence >(dimensao + 1));	
-	updateAllSubseq(s, subseq_matrix);
-	
-	buscaLocal(s, subseq_matrix);
-	for(int i = 0; i < s->sequence.size(); i++) {
-		std::cout << s->sequence[i] << " ";
-	}
-	std::cout << std::endl;
-	
-	
-	perturbacao(s);
-	updateAllSubseq(s, subseq_matrix);
-	buscaLocal(s, subseq_matrix);
-	for(int i = 0; i < s->sequence.size(); i++) {
-		std::cout << s->sequence[i] << " ";
-	}
-	std::cout << std::endl;
-	int n = s->sequence.size();
-	s->cost = subseq_matrix[1][n - 2].C;
-	std::cout << "Cost: " << s->cost << std::endl;
-	std::cout << "gap: " << (s->cost - custoEntrada) / custoEntrada << std::endl;
-	
-	int repetidos = 0;
-	for(int i = 1; i < s->sequence.size() - 1; i++) {
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
+		std::cout << std::setfill('-') << std::setw(169) << '\n';
 
-		int valor = s->sequence[i];
+		/* Matriz com todas as subsequencia
+		* a subseq_matrix[i][j] armazena informações da subsequencia que inicia em i e termina em j relativo a solução s	*/
+	
+		// Somamos mais 1 para incluir o 1 final
+		// Dado uma instancia de dimensão 14, temos 14 pontos, mas em teoria temos 15 pontos por conta do ciclo hamiltoniano 1 --- 1
+		std::vector < std::vector < Subsequence > > subseq_matrix(dimensao + 1, std::vector < Subsequence >(dimensao + 1));	
+		updateAllSubseq(s, subseq_matrix);
+	
+		buscaLocal(s, subseq_matrix);
+		for(int i = 0; i < s->sequence.size(); i++) {
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
+	
+	
+		perturbacao(s);
+		updateAllSubseq(s, subseq_matrix);
+		buscaLocal(s, subseq_matrix);
+		for(int i = 0; i < s->sequence.size(); i++) {
+			std::cout << s->sequence[i] << " ";
+		}
+		std::cout << std::endl;
+		int n = s->sequence.size();
+		s->cost = subseq_matrix[0][n - 1].C;
+	//	std::cout << "Iteracao " << i << '\n';
+		std::cout << "Cost: " << s->cost << std::endl;
+		std::cout << "gap: " << (s->cost - custoEntrada) / custoEntrada << std::endl;
+		sum += (s->cost - custoEntrada) / custoEntrada;
 
-		for(int  j = i + 1; j < s->sequence.size(); j++) {
+		int repetidos = 0;
+		for(int i = 1; i < s->sequence.size() - 1; i++) {
 
-			if(valor == s->sequence[j]) {
-				repetidos++;
+			int valor = s->sequence[i];
+
+			for(int  j = i + 1; j < s->sequence.size(); j++) {
+
+				if(valor == s->sequence[j]) {
+					repetidos++;
+				}
 			}
 		}
-	}
-	std::cout << "repetidos: " << repetidos << std::endl;
+		std::cout << "repetidos: " << repetidos << std::endl;
+		std::cout << "tamanho instancia: " << s->sequence.size() - 1 << std::endl;
+	
+	//}
+
+	//std::cout << "gap: " << sum / 10 << std::endl;
 	for(int i = 0; i < dimensao; i++) {
 		delete matriz[i];
 	}
